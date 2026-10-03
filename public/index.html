@@ -3,58 +3,34 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GSTIN Bulk Validator — GST Portal Automation</title>
+<title>GSTIN Bulk Validator</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a202c;min-height:100vh}
 
-/* ─── Header ─── */
 .hdr{background:linear-gradient(135deg,#1a365d 0%,#2b6cb0 100%);color:#fff;
-     padding:16px 32px;display:flex;align-items:center;gap:14px;
+     padding:18px 32px;display:flex;align-items:center;gap:14px;
      box-shadow:0 2px 12px rgba(0,0,0,.25)}
-.hdr-icon{font-size:32px}
+.hdr-ico{font-size:32px}
 .hdr h1{font-size:20px;font-weight:700}
 .hdr p{font-size:12px;opacity:.85;margin-top:2px}
 
-/* ─── Layout ─── */
-.wrap{max-width:1080px;margin:28px auto;padding:0 18px;display:flex;flex-direction:column;gap:20px}
+.wrap{max-width:1100px;margin:28px auto;padding:0 18px;display:flex;flex-direction:column;gap:20px}
 
-/* ─── Stepper ─── */
-.stepper{display:flex;gap:0;background:#fff;border-radius:12px;
-         box-shadow:0 2px 14px rgba(0,0,0,.07);overflow:hidden}
-.step{flex:1;padding:16px 20px;display:flex;align-items:center;gap:10px;
-      border-right:1px solid #e2e8f0;position:relative;transition:.2s}
-.step:last-child{border-right:none}
-.step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
-          justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
-.step-txt .t{font-size:13px;font-weight:700;color:#2d3748}
-.step-txt .s{font-size:11px;color:#718096;margin-top:2px}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.07);padding:26px 30px}
+.card h2{font-size:15px;font-weight:700;color:#1a365d;margin-bottom:16px;display:flex;align-items:center;gap:8px}
 
-.step.pending  .step-num{background:#e2e8f0;color:#718096}
-.step.active   .step-num{background:#2b6cb0;color:#fff;box-shadow:0 0 0 4px #bee3f8}
-.step.active   .step-txt .t{color:#2b6cb0}
-.step.done     .step-num{background:#38a169;color:#fff}
-.step.done     .step-txt .t{color:#38a169}
+/* API key row */
+.key-row{display:flex;gap:10px;align-items:center}
+.key-row input{flex:1;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;
+               font-size:13px;font-family:'Courier New',monospace;outline:none}
+.key-row input:focus{border-color:#2b6cb0}
+.key-status{font-size:12px;margin-top:8px}
+.key-ok {color:#276749}
+.key-err{color:#c53030}
 
-/* ─── Card ─── */
-.card{background:#fff;border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.07);
-      padding:26px 30px}
-.card h2{font-size:15px;font-weight:700;color:#1a365d;margin-bottom:18px;
-         display:flex;align-items:center;gap:8px}
-
-/* ─── Buttons ─── */
-.btn{padding:11px 24px;border-radius:8px;border:none;font-size:14px;font-weight:700;
-     cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.18s}
-.btn-blue {background:#2b6cb0;color:#fff}.btn-blue:hover{background:#1a365d}
-.btn-blue:disabled{background:#a0aec0;cursor:not-allowed}
-.btn-green{background:#38a169;color:#fff}.btn-green:hover{background:#276749}
-.btn-green:disabled{background:#a0aec0;cursor:not-allowed}
-.btn-red  {background:#e53e3e;color:#fff}.btn-red:hover{background:#c53030}
-.btn-out  {background:#fff;color:#2b6cb0;border:1.5px solid #2b6cb0}.btn-out:hover{background:#ebf8ff}
-.btn-row  {display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-
-/* ─── Drop zone ─── */
-.drop{border:2.5px dashed #90cdf4;border-radius:10px;padding:40px 20px;
+/* drop zone */
+.drop{border:2.5px dashed #90cdf4;border-radius:10px;padding:44px 20px;
       text-align:center;cursor:pointer;background:#ebf8ff;transition:.2s}
 .drop:hover,.drop.over{border-color:#2b6cb0;background:#bee3f8}
 .drop .ico{font-size:44px;margin-bottom:10px}
@@ -63,32 +39,32 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a202c;m
 .file-ok{margin-top:12px;padding:9px 14px;background:#c6f6d5;border-radius:8px;
          font-size:13px;color:#276749;font-weight:600;display:none;align-items:center;gap:8px}
 
-/* ─── Live status banner ─── */
-.live-banner{padding:14px 18px;border-radius:10px;font-size:14px;font-weight:600;
-             display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.live-banner.info    {background:#ebf8ff;color:#2b6cb0;border:1.5px solid #bee3f8}
-.live-banner.success {background:#c6f6d5;color:#276749;border:1.5px solid #9ae6b4}
-.live-banner.warn    {background:#fefcbf;color:#975a16;border:1.5px solid #faf089}
-.live-banner.error   {background:#fed7d7;color:#c53030;border:1.5px solid #feb2b2}
+/* single check */
+.single-row{display:flex;gap:10px}
+.single-row input{flex:1;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;
+                  font-size:14px;font-family:'Courier New',monospace;
+                  text-transform:uppercase;letter-spacing:1px;outline:none}
+.single-row input:focus{border-color:#2b6cb0}
 
-/* ─── Current GSTIN indicator ─── */
-.current-box{background:#1a365d;color:#fff;border-radius:10px;padding:18px 22px;
-             margin-bottom:16px;display:none}
-.current-box .label{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.8px}
-.current-box .gstin{font-family:'Courier New',monospace;font-size:24px;font-weight:700;
-                     letter-spacing:2px;margin:6px 0}
-.current-box .sub{font-size:12px;opacity:.8}
-.pulse{animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* buttons */
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:13px;font-weight:700;
+     cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.18s}
+.btn-blue {background:#2b6cb0;color:#fff}.btn-blue:hover{background:#1a365d}
+.btn-blue:disabled{background:#a0aec0;cursor:not-allowed}
+.btn-green{background:#38a169;color:#fff}.btn-green:hover{background:#276749}
+.btn-green:disabled{background:#a0aec0;cursor:not-allowed}
+.btn-out  {background:#fff;color:#2b6cb0;border:1.5px solid #2b6cb0}.btn-out:hover{background:#ebf8ff}
+.btn-row  {display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
-/* ─── Progress bar ─── */
-.prog-wrap{margin-bottom:16px}
+/* progress */
+.prog-wrap{display:none;margin-top:18px}
+.prog-wrap.show{display:block}
 .prog-lbl{display:flex;justify-content:space-between;font-size:12px;color:#4a5568;margin-bottom:5px}
 .prog-bg{background:#e2e8f0;border-radius:999px;height:10px;overflow:hidden}
 .prog-fill{height:100%;background:linear-gradient(90deg,#2b6cb0,#4299e1);
-           border-radius:999px;width:0%;transition:width .4s}
+           border-radius:999px;width:0%;transition:width .3s}
 
-/* ─── Summary boxes ─── */
+/* summary */
 .sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:18px}
 .sbox{border-radius:10px;padding:14px;text-align:center}
 .sbox .n{font-size:28px;font-weight:700}
@@ -99,25 +75,30 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a202c;m
 .s-sus{background:#fefcbf;color:#975a16}
 .s-unk{background:#e2e8f0;color:#4a5568}
 
-/* ─── Filter tabs ─── */
+/* tabs */
 .tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
 .tab{padding:5px 14px;border-radius:999px;border:1.5px solid #e2e8f0;background:#fff;
      font-size:12px;font-weight:600;cursor:pointer;color:#4a5568;transition:.15s}
 .tab:hover{border-color:#2b6cb0;color:#2b6cb0}
 .tab.on{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
 
-/* ─── Results table ─── */
-.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;max-height:420px;overflow-y:auto}
+/* table */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;max-height:450px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#1a365d;color:#fff;padding:11px 13px;text-align:left;
          font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:1}
 tbody tr:nth-child(even){background:#f7fafc}
 tbody tr:hover{background:#ebf8ff}
-tbody tr.highlight{background:#fefcbf!important;animation:hl .8s ease}
-@keyframes hl{0%{background:#ffd700}100%{background:#fefcbf}}
+tbody tr.new{animation:flash .8s ease}
+@keyframes flash{0%{background:#ffd700}100%{background:inherit}}
 tbody td{padding:10px 13px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
 
-/* ─── Badges ─── */
+/* single result */
+.s-result{display:none;margin-top:16px;padding:16px 20px;border-radius:10px;border:1.5px solid #e2e8f0}
+.rrow{display:flex;gap:8px;margin-bottom:7px;font-size:13px}
+.rlbl{font-weight:700;color:#4a5568;min-width:160px}
+
+/* badges */
 .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
 .b-act{background:#c6f6d5;color:#276749}
 .b-can{background:#fed7d7;color:#c53030}
@@ -125,76 +106,61 @@ tbody td{padding:10px 13px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
 .b-inv{background:#e2e8f0;color:#4a5568}
 .b-err{background:#fed7d7;color:#c53030}
 .b-unk{background:#e9d8fd;color:#553c9a}
-.b-pend{background:#bee3f8;color:#2b6cb0}
 
-/* ─── Spinner ─── */
-.spin{display:inline-block;width:16px;height:16px;
-      border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;
-      border-radius:50%;animation:sp .75s linear infinite;vertical-align:middle}
+/* spinner */
+.spin{display:inline-block;width:15px;height:15px;
+      border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;
+      border-radius:50%;animation:sp .75s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-.hidden{display:none!important}
-.mt12{margin-top:12px}
 .alert{padding:11px 15px;border-radius:8px;font-size:13px;margin-top:12px}
-.alert-err{background:#fed7d7;color:#c53030}
-.alert-ok {background:#c6f6d5;color:#276749}
+.a-err{background:#fed7d7;color:#c53030}
+.a-ok {background:#c6f6d5;color:#276749}
+.a-inf{background:#ebf8ff;color:#2b6cb0}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="hdr">
-  <div class="hdr-icon">🏛️</div>
+  <div class="hdr-ico">🏛️</div>
   <div>
-    <h1>GSTIN Bulk Validator — GST Portal Automation</h1>
-    <p>Logs in to GST portal · Auto-types GSTINs · You solve CAPTCHA · Tool captures results</p>
+    <h1>GSTIN Bulk Validator</h1>
+    <p>Verify Active / Cancelled / Suspended status — upload Excel, get results instantly</p>
   </div>
 </div>
 
 <div class="wrap">
 
-  <!-- ── Stepper ── -->
-  <div class="stepper" id="stepper">
-    <div class="step active" id="step1">
-      <div class="step-num">1</div>
-      <div class="step-txt"><div class="t">Login</div><div class="s">Open GST Portal</div></div>
-    </div>
-    <div class="step pending" id="step2">
-      <div class="step-num">2</div>
-      <div class="step-txt"><div class="t">Upload Excel</div><div class="s">Your GSTIN list</div></div>
-    </div>
-    <div class="step pending" id="step3">
-      <div class="step-num">3</div>
-      <div class="step-txt"><div class="t">Auto-Validate</div><div class="s">Solve CAPTCHAs</div></div>
-    </div>
-    <div class="step pending" id="step4">
-      <div class="step-num">4</div>
-      <div class="step-txt"><div class="t">Download</div><div class="s">Excel Results</div></div>
-    </div>
-  </div>
-
-  <!-- ── STEP 1: Login ── -->
-  <div class="card" id="cardLogin">
-    <h2>🔐 Step 1 — Open GST Portal &amp; Login</h2>
-    <p style="font-size:13px;color:#4a5568;margin-bottom:16px;line-height:1.6">
-      Click the button below. A <strong>real Chrome window</strong> will open on the GST portal login page.<br>
-      Enter your <strong>Username, Password &amp; CAPTCHA</strong> there and log in normally.<br>
-      Once you're logged in, come back here and click <strong>"I'm Logged In"</strong>.
+  <!-- ── API Key ── -->
+  <div class="card">
+    <h2>🔑 Your API Key</h2>
+    <p style="font-size:13px;color:#4a5568;margin-bottom:12px">
+      Get a <strong>free API key</strong> (100 free lookups, no card) at
+      <a href="https://www.gstinapi.in" target="_blank" style="color:#2b6cb0">gstinapi.in</a>
+      → Sign up → Dashboard → API Keys → Copy key.
     </p>
-    <div class="btn-row" style="margin-top:0">
-      <button class="btn btn-blue" id="btnLaunch" onclick="launchBrowser()">
-        🌐 Open GST Portal Login
-      </button>
-      <button class="btn btn-green hidden" id="btnLoggedIn" onclick="confirmLogin()">
-        ✅ I'm Logged In — Continue
-      </button>
+    <div class="key-row">
+      <input type="password" id="apiKeyIn" placeholder="Paste your API key here  e.g. gak_live_xxxxxxxx" oninput="saveKey()"/>
+      <button class="btn btn-blue" onclick="testKey()">Test Key</button>
     </div>
-    <div id="loginAlert"></div>
+    <div class="key-status" id="keyStatus"></div>
   </div>
 
-  <!-- ── STEP 2: Upload Excel ── -->
-  <div class="card hidden" id="cardUpload">
-    <h2>📊 Step 2 — Upload Your Excel File with GSTINs</h2>
+  <!-- ── Single GSTIN ── -->
+  <div class="card">
+    <h2>🔍 Check Single GSTIN</h2>
+    <div class="single-row">
+      <input type="text" id="singleIn" maxlength="15" placeholder="e.g. 27AAPFU0939F1ZV"
+             oninput="this.value=this.value.toUpperCase()"/>
+      <button class="btn btn-blue" id="singleBtn" onclick="checkSingle()">Check Status</button>
+    </div>
+    <div class="s-result" id="singleRes"></div>
+  </div>
+
+  <!-- ── Bulk Upload ── -->
+  <div class="card">
+    <h2>📊 Bulk Validate via Excel Upload</h2>
     <div class="drop" id="dropZone" onclick="document.getElementById('fileIn').click()">
       <div class="ico">📁</div>
       <div class="mt">Drop your Excel file here</div>
@@ -202,400 +168,328 @@ tbody td{padding:10px 13px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
       <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" style="display:none" onchange="onFilePick(this)"/>
     </div>
     <div class="file-ok" id="fileOk"></div>
-    <div class="alert alert-ok mt12" style="font-size:12px">
+
+    <div class="alert a-inf" style="margin-top:12px;font-size:12px">
       💡 GSTINs can be in <strong>any column</strong> — the tool finds all 15-character values automatically.
     </div>
+
     <div class="btn-row">
-      <button class="btn btn-blue" id="btnStart" disabled onclick="startBatch()">
-        ▶ Start Validation
+      <button class="btn btn-blue" id="valBtn" disabled onclick="validateBulk()">
+        <span id="valBtnTxt">Validate All GSTINs</span>
       </button>
+      <button class="btn btn-out" onclick="downloadTemplate()">⬇ Sample Template</button>
+    </div>
+
+    <div class="prog-wrap" id="progWrap">
+      <div class="prog-lbl"><span id="progTxt">Validating…</span><span id="progPct">0%</span></div>
+      <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
     </div>
     <div id="uploadAlert"></div>
   </div>
 
-  <!-- ── STEP 3: Live Validation ── -->
-  <div class="card hidden" id="cardRun">
-    <h2>⚡ Step 3 — Live Validation</h2>
+  <!-- ── Results ── -->
+  <div class="card hidden" id="resCard">
+    <h2>✅ Validation Results</h2>
 
-    <!-- Current GSTIN -->
-    <div class="current-box" id="currentBox">
-      <div class="label">Currently validating</div>
-      <div class="gstin pulse" id="currentGSTIN">—</div>
-      <div class="sub" id="currentSub">Waiting…</div>
-    </div>
-
-    <!-- Status banner -->
-    <div class="live-banner info" id="liveBanner">
-      <span id="bannerIcon">ℹ️</span>
-      <span id="bannerMsg">Preparing…</span>
-    </div>
-
-    <!-- Progress -->
-    <div class="prog-wrap">
-      <div class="prog-lbl">
-        <span id="progTxt">0 / 0 validated</span>
-        <span id="progPct">0%</span>
-      </div>
-      <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
-    </div>
-
-    <!-- Summary -->
-    <div class="sum-grid" id="sumGrid">
+    <div class="sum-grid">
       <div class="sbox s-tot"><div class="n" id="cntTotal">0</div><div class="l">Total</div></div>
       <div class="sbox s-act"><div class="n" id="cntActive">0</div><div class="l">Active</div></div>
       <div class="sbox s-can"><div class="n" id="cntCancelled">0</div><div class="l">Cancelled</div></div>
       <div class="sbox s-sus"><div class="n" id="cntSuspended">0</div><div class="l">Suspended</div></div>
-      <div class="sbox s-unk"><div class="n" id="cntOther">0</div><div class="l">Other</div></div>
+      <div class="sbox s-unk"><div class="n" id="cntOther">0</div><div class="l">Other/Error</div></div>
     </div>
 
-    <!-- Filter tabs -->
-    <div class="tabs" id="tabsRow">
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn btn-green" id="dlBtn" onclick="downloadResults()">⬇ Download Excel</button>
+      <button class="btn btn-out" onclick="resetAll()">🔄 New File</button>
+    </div>
+
+    <div class="tabs">
       <button class="tab on" onclick="filterTable('All',this)">All</button>
       <button class="tab" onclick="filterTable('Active',this)">Active</button>
       <button class="tab" onclick="filterTable('Cancelled',this)">Cancelled</button>
       <button class="tab" onclick="filterTable('Suspended',this)">Suspended</button>
-      <button class="tab" onclick="filterTable('Other',this)">Other</button>
+      <button class="tab" onclick="filterTable('Other',this)">Other/Error</button>
     </div>
 
-    <!-- Results table -->
     <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>GSTIN</th>
-            <th>Status</th>
-            <th>Legal Name</th>
-            <th>Trade Name</th>
-            <th>Reg. Date</th>
-            <th>GSTN Type</th>
-            <th>State</th>
+            <th>#</th><th>GSTIN</th><th>Status</th><th>Legal Name</th>
+            <th>Trade Name</th><th>Reg. Date</th><th>Type</th>
+            <th>State</th><th>Address</th>
           </tr>
         </thead>
         <tbody id="tBody"></tbody>
       </table>
     </div>
-
-    <div class="btn-row" style="margin-top:20px">
-      <button class="btn btn-green hidden" id="btnDownload" onclick="downloadResults()">
-        ⬇ Download Results as Excel
-      </button>
-      <button class="btn btn-red hidden" id="btnStop" onclick="stopSession()">
-        ⏹ Close Chrome &amp; Stop
-      </button>
-    </div>
   </div>
 
-</div><!-- /wrap -->
+</div>
 
 <script>
-// ─── state ────────────────────────────────────────────────────────────────────
-let allResults   = [];
-let pickedFile   = null;
-let loginPollTmr = null;
-let counts       = { Active:0, Cancelled:0, Suspended:0, Other:0 };
-let totalGSTINs  = 0;
-let doneCount    = 0;
+// ─── Globals ──────────────────────────────────────────────────────────────
+let allResults = [];
+let pickedFile = null;
+let counts     = { Active:0, Cancelled:0, Suspended:0, Other:0 };
 let activeFilter = 'All';
 
-// ─── SSE connection ───────────────────────────────────────────────────────────
-function connectSSE() {
-  const es = new EventSource('/api/events');
-  es.onmessage = e => handleEvent(JSON.parse(e.data));
-  es.onerror   = () => setTimeout(connectSSE, 3000);
-}
-connectSSE();
+// Load saved API key
+const savedKey = localStorage.getItem('gstin_api_key') || '';
+if (savedKey) document.getElementById('apiKeyIn').value = savedKey;
 
-function handleEvent(ev) {
-  switch (ev.type) {
-
-    case 'status':
-      setBanner('info', 'ℹ️', ev.message);
-      break;
-
-    case 'batch_start':
-      totalGSTINs = ev.total;
-      doneCount   = 0;
-      allResults  = [];
-      counts      = { Active:0, Cancelled:0, Suspended:0, Other:0 };
-      updateSummary();
-      setProgress(0, ev.total);
-      setStep(3);
-      document.getElementById('cardRun').classList.remove('hidden');
-      document.getElementById('currentBox').style.display = 'block';
-      document.getElementById('btnStop').classList.remove('hidden');
-      setBanner('info', '⚡', `Starting validation of ${ev.total} GSTINs…`);
-      break;
-
-    case 'typing':
-      document.getElementById('currentGSTIN').textContent = ev.gstin;
-      document.getElementById('currentSub').textContent   =
-        `(${ev.index + 1} of ${ev.total}) — typing into GST portal…`;
-      setBanner('info', '⌨️', `Typing GSTIN ${ev.gstin} into GST portal…`);
-      break;
-
-    case 'waiting_captcha':
-      document.getElementById('currentGSTIN').textContent = ev.gstin;
-      document.getElementById('currentSub').textContent   =
-        `(${ev.index + 1} of ${ev.total}) — waiting for you to solve CAPTCHA`;
-      setBanner('warn', '🔐',
-        `GSTIN typed ✔ — Now <strong>solve the CAPTCHA &amp; click Search</strong> in the Chrome window.`);
-      // Flash the window title
-      let blink = 0;
-      const origTitle = document.title;
-      const blinkTmr = setInterval(() => {
-        document.title = blink++ % 2 === 0 ? '⚠️ SOLVE CAPTCHA NOW!' : origTitle;
-      }, 700);
-      setTimeout(() => { clearInterval(blinkTmr); document.title = origTitle; }, 30000);
-      break;
-
-    case 'result':
-      doneCount++;
-      const r = ev.result;
-      // accumulate
-      if (r.status === 'Active')         counts.Active++;
-      else if (r.status === 'Cancelled') counts.Cancelled++;
-      else if (r.status === 'Suspended') counts.Suspended++;
-      else                                counts.Other++;
-
-      allResults.push(r);
-      addRowToTable(r, doneCount);
-      updateSummary();
-      setProgress(doneCount, totalGSTINs);
-      setBanner('success', '✅', `Got result for ${r.gstin}: <strong>${r.status}</strong>`);
-      break;
-
-    case 'next_in':
-      setBanner('info', '⏭️', `Next: ${ev.gstin} — get ready to solve another CAPTCHA`);
-      break;
-
-    case 'done':
-      document.getElementById('currentBox').style.display = 'none';
-      setBanner('success', '🎉',
-        `All ${ev.total} GSTINs validated! Click <strong>Download Results</strong> to save Excel.`);
-      document.getElementById('btnDownload').classList.remove('hidden');
-      document.getElementById('btnStop').classList.remove('hidden');
-      setStep(4);
-      break;
-
-    case 'error':
-      setBanner('error', '❌', ev.message);
-      break;
-  }
+function saveKey() {
+  const k = document.getElementById('apiKeyIn').value.trim();
+  localStorage.setItem('gstin_api_key', k);
+  document.getElementById('keyStatus').textContent = '';
 }
 
-// ─── Step 1: Launch browser ───────────────────────────────────────────────────
-async function launchBrowser() {
-  const btn = document.getElementById('btnLaunch');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Opening Chrome…';
-  setAlert('loginAlert', '', '');
+function getKey() { return document.getElementById('apiKeyIn').value.trim(); }
 
+// ─── Test API key ─────────────────────────────────────────────────────────
+async function testKey() {
+  const key = getKey();
+  if (!key) { setKeyStatus('Enter an API key first', false); return; }
+  setKeyStatus('Testing…', null);
   try {
-    const r = await post('/api/launch');
-    if (!r.ok) throw new Error(r.error || 'Failed to open Chrome');
-    btn.innerHTML = '🌐 Chrome Opened';
-    // Show "I'm logged in" button and start polling
-    document.getElementById('btnLoggedIn').classList.remove('hidden');
-    startLoginPoll();
+    const r = await fetch('/api/validate/27AAPFU0939F1ZV', {
+      headers: { 'x-api-key': key }
+    });
+    const d = await r.json();
+    if (d.status === 'Invalid API key' || d.error === 'Invalid API key') {
+      setKeyStatus('❌ Invalid API key', false);
+    } else if (d.error && d.error.includes('credit')) {
+      setKeyStatus('⚠️ Key valid but credits exhausted', false);
+    } else {
+      setKeyStatus('✅ API key is working!', true);
+    }
   } catch(e) {
-    btn.disabled = false;
-    btn.innerHTML = '🌐 Open GST Portal Login';
-    setAlert('loginAlert', 'err', '❌ ' + e.message);
+    setKeyStatus('❌ Could not connect: ' + e.message, false);
   }
 }
 
-function startLoginPoll() {
-  if (loginPollTmr) clearInterval(loginPollTmr);
-  loginPollTmr = setInterval(async () => {
-    try {
-      const r = await get('/api/login-status');
-      if (r.loggedIn) {
-        clearInterval(loginPollTmr);
-        onLoginDetected();
-      }
-    } catch(_) {}
-  }, 2000);
+function setKeyStatus(msg, ok) {
+  const el = document.getElementById('keyStatus');
+  el.textContent = msg;
+  el.className   = 'key-status ' + (ok === true ? 'key-ok' : ok === false ? 'key-err' : '');
 }
 
-function onLoginDetected() {
-  clearInterval(loginPollTmr);
-  setAlert('loginAlert', 'ok', '✅ Login detected automatically!');
-  setTimeout(() => {
-    document.getElementById('cardLogin').style.opacity = '.6';
-    document.getElementById('cardUpload').classList.remove('hidden');
-    setStep(2);
-  }, 800);
+// ─── Single GSTIN check ───────────────────────────────────────────────────
+async function checkSingle() {
+  const g = document.getElementById('singleIn').value.trim();
+  if (!g) return;
+  const btn = document.getElementById('singleBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Checking…';
+  try {
+    const r = await fetch('/api/validate/' + g, { headers: { 'x-api-key': getKey() } });
+    renderSingle(await r.json());
+  } catch(e) {
+    renderSingle({ gstin: g, status: 'Error', error: e.message });
+  }
+  btn.disabled = false; btn.textContent = 'Check Status';
+}
+document.getElementById('singleIn').addEventListener('keydown', e => { if (e.key==='Enter') checkSingle(); });
+
+function renderSingle(d) {
+  const el = document.getElementById('singleRes');
+  el.style.background = bgFor(d.status);
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span style="font-family:monospace;font-size:18px;font-weight:700">${d.gstin}</span>
+      ${badge(d.status)}
+    </div>
+    <div class="rrow"><span class="rlbl">Legal Name</span>${d.legalName||'-'}</div>
+    <div class="rrow"><span class="rlbl">Trade Name</span>${d.tradeName||'-'}</div>
+    <div class="rrow"><span class="rlbl">Registration Date</span>${d.registrationDate||'-'}</div>
+    <div class="rrow"><span class="rlbl">Taxpayer Type</span>${d.gstnType||'-'}</div>
+    <div class="rrow"><span class="rlbl">Address</span>${d.address||'-'}</div>
+    ${d.error?`<div style="margin-top:6px;font-size:12px;color:#c53030">⚠ ${d.error}</div>`:''}
+  `;
+  el.style.display = 'block';
 }
 
-async function confirmLogin() {
-  clearInterval(loginPollTmr);
-  document.getElementById('cardLogin').style.opacity = '.6';
-  document.getElementById('cardUpload').classList.remove('hidden');
-  setStep(2);
-}
-
-// ─── Step 2: File upload ──────────────────────────────────────────────────────
+// ─── Drag & drop ──────────────────────────────────────────────────────────
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('over')});
 dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-dz.addEventListener('drop',e=>{
-  e.preventDefault();dz.classList.remove('over');
-  if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
-});
-function onFilePick(inp){ if(inp.files[0]) setFile(inp.files[0]); }
-
-function setFile(f) {
-  pickedFile = f;
-  const bar = document.getElementById('fileOk');
-  bar.innerHTML = `✅ <span>${f.name}</span>&nbsp;(${(f.size/1024).toFixed(1)} KB)`;
-  bar.style.display = 'flex';
-  document.getElementById('btnStart').disabled = false;
-  setAlert('uploadAlert','','');
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files[0])setFile(e.dataTransfer.files[0])});
+function onFilePick(inp){if(inp.files[0])setFile(inp.files[0])}
+function setFile(f){
+  pickedFile=f;
+  const b=document.getElementById('fileOk');
+  b.innerHTML=`✅ ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+  b.style.display='flex';
+  document.getElementById('valBtn').disabled=false;
+  document.getElementById('uploadAlert').innerHTML='';
 }
 
-async function startBatch() {
+// ─── Bulk validate via SSE ────────────────────────────────────────────────
+async function validateBulk() {
   if (!pickedFile) return;
-  const btn = document.getElementById('btnStart');
-  btn.disabled  = true;
-  btn.innerHTML = '<span class="spin"></span> Reading file…';
+  const key = getKey();
+  if (!key) { showAlert('uploadAlert','err','Please enter your API key above first.'); return; }
+
+  const btn = document.getElementById('valBtn');
+  document.getElementById('valBtnTxt').innerHTML='<span class="spin"></span> Validating…';
+  btn.disabled = true;
+  document.getElementById('progWrap').classList.add('show');
+  setProgress(0, 1, 'Uploading file…');
+  document.getElementById('resCard').classList.add('hidden');
+  document.getElementById('uploadAlert').innerHTML='';
+  allResults=[]; counts={Active:0,Cancelled:0,Suspended:0,Other:0};
+  document.getElementById('tBody').innerHTML='';
 
   const form = new FormData();
   form.append('file', pickedFile);
+  form.append('apiKey', key);
 
   try {
-    const r = await fetch('/api/start-batch', { method:'POST', body:form });
-    const data = await r.json();
-    if (!r.ok || data.error) throw new Error(data.error || 'Failed to start');
-    btn.innerHTML = `✔ ${data.total} GSTINs queued`;
-    // SSE will drive the rest
+    const resp = await fetch('/api/validate-excel', { method:'POST', body:form });
+
+    if (!resp.ok) {
+      const d = await resp.json();
+      showAlert('uploadAlert','err', d.error || 'Upload failed');
+      resetBtn(); return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try { handleSSE(JSON.parse(line.slice(6))); } catch(_) {}
+        }
+      }
+    }
   } catch(e) {
-    btn.disabled  = false;
-    btn.innerHTML = '▶ Start Validation';
-    setAlert('uploadAlert','err','❌ ' + e.message);
+    showAlert('uploadAlert','err','Error: ' + e.message);
+  }
+
+  resetBtn();
+}
+
+function handleSSE(ev) {
+  if (ev.type === 'start') {
+    setProgress(0, ev.total, `Found ${ev.total} GSTINs, validating…`);
+    document.getElementById('resCard').classList.remove('hidden');
+  }
+  if (ev.type === 'result') {
+    const r = ev.result;
+    allResults.push(r);
+    if (r.status==='Active') counts.Active++;
+    else if(r.status==='Cancelled') counts.Cancelled++;
+    else if(r.status==='Suspended') counts.Suspended++;
+    else counts.Other++;
+    updateSummary();
+    addRow(r, allResults.length);
+    setProgress(ev.index+1, ev.total, `Validated ${ev.index+1} of ${ev.total}…`);
+  }
+  if (ev.type === 'done') {
+    setProgress(ev.total, ev.total, `Done! ${ev.total} GSTINs validated.`);
+    document.getElementById('resCard').scrollIntoView({behavior:'smooth'});
   }
 }
 
-// ─── Table rendering ──────────────────────────────────────────────────────────
-function addRowToTable(r, idx) {
-  const tbody = document.getElementById('tBody');
+function resetBtn() {
+  document.getElementById('valBtnTxt').textContent='Validate All GSTINs';
+  document.getElementById('valBtn').disabled=false;
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────
+function addRow(r, idx) {
   const tr = document.createElement('tr');
-  tr.id = 'row-' + r.gstin;
   tr.dataset.status = r.status;
-  tr.classList.add('highlight');
+  tr.classList.add('new');
   tr.innerHTML = `
     <td>${idx}</td>
     <td style="font-family:monospace;font-weight:700">${r.gstin}</td>
     <td>${badge(r.status)}</td>
-    <td>${r.legalName||'-'}</td>
-    <td>${r.tradeName||'-'}</td>
+    <td title="${r.legalName||''}">${truncate(r.legalName,30)}</td>
+    <td title="${r.tradeName||''}">${truncate(r.tradeName,20)}</td>
     <td>${r.registrationDate||'-'}</td>
     <td>${r.gstnType||'-'}</td>
-    <td>${r.stateCode||r.gstin.substring(0,2)}</td>
+    <td>${r.stateCode||'-'}</td>
+    <td title="${r.address||''}">${truncate(r.address,25)}</td>
   `;
-  tbody.appendChild(tr);
-  tr.scrollIntoView({ behavior:'smooth', block:'nearest' });
-
-  // Apply filter
-  if (activeFilter !== 'All') {
-    const show = activeFilter === 'Other'
+  if (activeFilter!=='All') {
+    const show = activeFilter==='Other'
       ? !['Active','Cancelled','Suspended'].includes(r.status)
-      : r.status === activeFilter;
-    if (!show) tr.style.display = 'none';
+      : r.status===activeFilter;
+    if (!show) tr.style.display='none';
   }
+  document.getElementById('tBody').appendChild(tr);
+  tr.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function filterTable(filter, btn) {
-  activeFilter = filter;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+function filterTable(f, btn) {
+  activeFilter=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');
-  document.querySelectorAll('#tBody tr').forEach(tr => {
-    const s = tr.dataset.status;
-    if (filter === 'All') { tr.style.display = ''; return; }
-    if (filter === 'Other') {
-      tr.style.display = ['Active','Cancelled','Suspended'].includes(s) ? 'none' : '';
-    } else {
-      tr.style.display = s === filter ? '' : 'none';
-    }
+  document.querySelectorAll('#tBody tr').forEach(tr=>{
+    const s=tr.dataset.status;
+    if(f==='All'){tr.style.display='';return}
+    tr.style.display=(f==='Other'?!['Active','Cancelled','Suspended'].includes(s):s===f)?'':'none';
   });
 }
 
-// ─── Download ─────────────────────────────────────────────────────────────────
+// ─── Download ─────────────────────────────────────────────────────────────
 async function downloadResults() {
   if (!allResults.length) return;
-  const r = await fetch('/api/download', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ results: allResults })
-  });
+  const r = await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({results:allResults})});
   const blob = await r.blob();
-  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'GSTIN_Validation_Results.xlsx';
+  a.click();
+}
+
+function downloadTemplate() {
+  const rows = [['GSTIN'],['27AAPFU0939F1ZV'],['29AAGCM6462N1Z7'],['07AABCU9603R1ZP']];
+  const csv  = rows.map(r=>r.join(',')).join('\n');
   const a    = document.createElement('a');
-  a.href = url; a.download = 'GSTIN_Validation_Results.xlsx'; a.click();
-  URL.revokeObjectURL(url);
+  a.href     = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'GSTIN_Sample_Template.csv';
+  a.click();
 }
 
-async function stopSession() {
-  await fetch('/api/close', { method:'POST' });
-  setBanner('info','ℹ️','Chrome closed. Refresh the page to start a new session.');
-  document.getElementById('btnStop').classList.add('hidden');
+function resetAll() {
+  allResults=[]; pickedFile=null; counts={Active:0,Cancelled:0,Suspended:0,Other:0};
+  document.getElementById('fileOk').style.display='none';
+  document.getElementById('valBtn').disabled=true;
+  document.getElementById('resCard').classList.add('hidden');
+  document.getElementById('progWrap').classList.remove('show');
+  document.getElementById('uploadAlert').innerHTML='';
+  document.getElementById('fileIn').value='';
+  document.getElementById('tBody').innerHTML='';
+  updateSummary();
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function setStep(n) {
-  document.querySelectorAll('.step').forEach((s, i) => {
-    s.className = 'step ' + (i+1 < n ? 'done' : i+1 === n ? 'active' : 'pending');
-    if (i+1 < n) s.querySelector('.step-num').textContent = '✓';
-    else         s.querySelector('.step-num').textContent = i+1;
-  });
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function setProgress(done, total, txt) {
+  const pct = total>0?Math.round((done/total)*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progTxt').textContent=txt||`${done}/${total}`;
+  document.getElementById('progPct').textContent=pct+'%';
 }
-
-function setProgress(done, total) {
-  const pct = total > 0 ? Math.round((done/total)*100) : 0;
-  document.getElementById('progFill').style.width = pct + '%';
-  document.getElementById('progTxt').textContent  = `${done} / ${total} validated`;
-  document.getElementById('progPct').textContent  = pct + '%';
-}
-
 function updateSummary() {
-  document.getElementById('cntTotal').textContent     = allResults.length;
-  document.getElementById('cntActive').textContent    = counts.Active;
-  document.getElementById('cntCancelled').textContent = counts.Cancelled;
-  document.getElementById('cntSuspended').textContent = counts.Suspended;
-  document.getElementById('cntOther').textContent     = counts.Other;
+  document.getElementById('cntTotal').textContent    =allResults.length;
+  document.getElementById('cntActive').textContent   =counts.Active;
+  document.getElementById('cntCancelled').textContent=counts.Cancelled;
+  document.getElementById('cntSuspended').textContent=counts.Suspended;
+  document.getElementById('cntOther').textContent    =counts.Other;
 }
-
-function setBanner(type, icon, msg) {
-  const b = document.getElementById('liveBanner');
-  b.className = 'live-banner ' + type;
-  document.getElementById('bannerIcon').textContent = icon;
-  document.getElementById('bannerMsg').innerHTML    = msg;
-}
-
-function badge(s) {
-  const m = {'Active':'b-act','Cancelled':'b-can','Suspended':'b-sus',
-             'Invalid Format':'b-inv','Not Found':'b-inv','Timeout':'b-err','Error':'b-err'};
-  return `<span class="badge ${m[s]||'b-unk'}">${s}</span>`;
-}
-
-function setAlert(id, type, msg) {
-  document.getElementById(id).innerHTML = msg
-    ? `<div class="alert alert-${type==='err'?'err':'ok'}">${msg}</div>`
-    : '';
-}
-
-async function post(url, body) {
-  const r = await fetch(url, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: body ? JSON.stringify(body) : undefined
-  });
-  return r.json();
-}
-
-async function get(url) {
-  return (await fetch(url)).json();
-}
+function showAlert(id,type,msg){document.getElementById(id).innerHTML=`<div class="alert a-${type==='err'?'err':'ok'}">${msg}</div>`}
+function badge(s){const m={'Active':'b-act','Cancelled':'b-can','Suspended':'b-sus','Invalid Format':'b-inv','Not Found':'b-inv','API Error':'b-err','No API Key':'b-err'};return`<span class="badge ${m[s]||'b-unk'}">${s}</span>`}
+function bgFor(s){if(s==='Active')return'#f0fff4';if(s==='Cancelled')return'#fff5f5';if(s==='Suspended')return'#fffff0';return'#f7fafc'}
+function truncate(s,n){if(!s||s==='-')return'-';return s.length>n?s.substring(0,n)+'…':s}
 </script>
 </body>
 </html>

@@ -1,53 +1,53 @@
-# 🏛️ GSTIN Bulk Validator — GST Portal Automation
+# 🏛️ GSTIN Bulk Validator
 
-Bulk-validate Indian GSTINs (Active / Cancelled / Suspended) by automating the official GST portal. No unofficial APIs, no third-party services — uses a real Chrome browser session with your own GST login.
+Bulk-validate Indian GSTINs (Active / Cancelled / Suspended) by uploading an Excel file. Live on Render — no installation needed.
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 ---
 
 ## ✨ Features
 
-- 🔐 **You log in** to the GST portal once — tool reuses your session
-- ⌨️ **Auto-types** each GSTIN into the search box one by one
-- 🔐 **You solve the CAPTCHA** and click Search (takes ~5 seconds per GSTIN)
-- ✅ **Tool scrapes** Active / Cancelled / Suspended automatically
-- 📊 **Drop any Excel file** — GSTINs detected from any column
-- 📈 **Live results table** with colour-coded statuses as each result comes in
-- ⬇️ **Download results** as a formatted Excel file
+- 📊 **Upload any Excel file** — GSTINs detected from any column automatically
+- ⚡ **Instant bulk validation** — results stream in live as each GSTIN is checked
+- ✅ **Active / Cancelled / Suspended** status with legal name, address, registration date
+- ⬇️ **Download results** as a colour-coded Excel file
+- 🔍 **Single GSTIN check** — type any GSTIN and get instant result
+- 🌐 **Fully cloud-hosted** on Render — works from any browser, no install
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Deploy to Render (Free)
 
-### Requirements
-- [Node.js](https://nodejs.org) v18 or higher
-- Windows 10 / 11
+### Step 1 — Get a free API key
+1. Go to **[gstinapi.in](https://www.gstinapi.in)**
+2. Sign up (free, no credit card)
+3. Go to Dashboard → API Keys → Create key → Copy it
 
-### Install & Run
+### Step 2 — Deploy on Render
+1. Fork this repo on GitHub
+2. Go to **[render.com](https://render.com)** → New → Web Service
+3. Connect your forked GitHub repo
+4. Set these values:
+   - **Build Command:** `npm install`
+   - **Start Command:** `node server.js`
+5. Add Environment Variable:
+   - Key: `GSTIN_API_KEY`
+   - Value: *(paste your key from gstinapi.in)*
+6. Click **Deploy** — your app goes live at `https://your-app.onrender.com`
+
+---
+
+## 💻 Run Locally
 
 ```bash
 git clone https://github.com/shubham-9122/gstin-bulk-validator.git
 cd gstin-bulk-validator
 npm install
-```
-
-Then double-click **`LAUNCH.vbs`** — browser opens automatically at `http://localhost:3000`.
-
----
-
-## 📋 How It Works
-
-```
-1. Double-click LAUNCH.vbs
-2. Browser opens → click "Open GST Portal Login"
-3. Real Chrome opens → log in with your GST credentials
-4. Click "I'm Logged In" in the browser tool
-5. Drop your Excel file with GSTINs
-6. Click "Start Validation"
-7. For each GSTIN:
-   - Tool types GSTIN automatically ✅
-   - You solve CAPTCHA + click Search (5 sec) ✅
-   - Tool reads result automatically ✅
-8. Download final Excel with all results
+cp .env.example .env
+# Edit .env and add your GSTIN_API_KEY
+node server.js
+# Open http://localhost:3000
 ```
 
 ---
@@ -56,55 +56,61 @@ Then double-click **`LAUNCH.vbs`** — browser opens automatically at `http://lo
 
 ```
 gstin-bulk-validator/
-├── server.js              # Express backend + SSE live updates
-├── gstin-automation.js    # Puppeteer automation (types GSTINs, scrapes results)
-├── LAUNCH.vbs             # One-click launcher (starts server + opens browser)
+├── server.js          # Express backend — API calls, Excel parsing, SSE streaming
 ├── public/
-│   └── index.html         # Frontend UI (4-step wizard)
+│   └── index.html     # Frontend — drag & drop, live results table, download
+├── render.yaml        # Render deployment config
+├── .env.example       # Environment variable template
 └── package.json
 ```
 
 ---
 
-## 📊 Excel Input Format
+## 📊 Excel Input
 
-Your Excel file can have GSTINs in **any column** — the tool automatically finds all 15-character GSTIN values.
+GSTINs can be in **any column**, any row. The tool finds all 15-character values automatically.
 
 | GSTIN           |
 |-----------------|
 | 27AAPFU0939F1ZV |
 | 29AAGCM6462N1Z7 |
-| 07AABCU9603R1ZP |
 
 ---
 
 ## 📤 Excel Output
 
-| S.No | GSTIN           | Status    | Legal Name       | Trade Name | Reg. Date  | GSTN Type | State |
-|------|-----------------|-----------|------------------|------------|------------|-----------|-------|
-| 1    | 27AAPFU0939F1ZV | Active    | ABC Pvt Ltd      | ABC        | 01-07-2017 | Regular   | 27    |
-| 2    | 29AAGCM6462N1Z7 | Cancelled | XYZ Traders      | XYZ        | 15-09-2018 | Regular   | 29    |
+Colour-coded results with:
+- ✅ **Active** — green
+- ❌ **Cancelled** — red
+- ⚠️ **Suspended** — yellow
+
+Columns: GSTIN, Status, Legal Name, Trade Name, Registration Date, Cancellation Date, Taxpayer Type, Constitution, State Code, Address, Pincode
 
 ---
 
-## ⚠️ Important Notes
+## 🔑 API Credits
 
-- This tool uses **your own GST portal login** — your credentials are never stored or transmitted anywhere
-- The CAPTCHA must be solved manually (this is intentional — the GST portal WAF blocks automation of the captcha)
-- Validated at ~1 GSTIN per 10–15 seconds (time to solve captcha + click)
-- Works with `.xlsx`, `.xls`, and `.csv` files
+| Plan | Lookups | Price |
+|------|---------|-------|
+| Free | 100 | ₹0 |
+| Starter | 250 | ₹199 |
+| Popular | 1,200 | ₹599 |
+| Scale | 6,250 | ₹2,499 |
+
+Credits never expire. Get them at [gstinapi.in](https://www.gstinapi.in).
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Node.js** + **Express** — backend server
-- **Puppeteer** — headless/visible Chrome automation
-- **ExcelJS** — read/write Excel files
-- **Server-Sent Events (SSE)** — live result streaming to browser
+- **Node.js** + **Express** — backend
+- **gstinapi.in** — GSTIN data (official GSP network)
+- **ExcelJS** — read/write Excel
+- **Server-Sent Events** — live result streaming
+- **Render** — free cloud hosting
 
 ---
 
 ## 📄 License
 
-MIT License — free to use and modify.
+MIT — free to use and modify.

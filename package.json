@@ -1,22 +1,19 @@
 {
-  "name": "gstin-validator",
-  "version": "1.0.0",
-  "description": "Bulk GSTIN Status Validator - Active / Cancelled / Suspended",
+  "name": "gstin-bulk-validator",
+  "version": "2.0.0",
+  "description": "Bulk validate Indian GSTINs - Active/Cancelled/Suspended via gstinapi.in",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
-    "@sparticuz/chromium": "^153.0.0",
     "axios": "^1.6.2",
     "cors": "^2.8.5",
     "exceljs": "^4.4.0",
     "express": "^4.18.2",
-    "multer": "^2.0.0",
-    "puppeteer": "^25.12.0",
-    "puppeteer-core": "^25.12.0"
-  },
-  "allowScripts": {
-    "puppeteer@25.12.0": true
+    "multer": "^2.0.0"
   }
 }
