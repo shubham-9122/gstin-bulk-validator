@@ -123,8 +123,17 @@ app.post("/api/download", async (req, res) => {
   res.end();
 });
 
+// Record result sent from frontend (scraped from portal tab)
+app.post("/api/record-result", (req, res) => {
+  const result = req.body;
+  if (result && result.gstin) {
+    broadcast({ type: "result", index: 0, total: 0, result });
+  }
+  res.json({ ok: true });
+});
+
 app.post("/api/close", async (req, res) => {
-  await automation.closeBrowser();
+  await automation.closeBrowser().catch(() => {});
   res.json({ ok: true });
 });
 
