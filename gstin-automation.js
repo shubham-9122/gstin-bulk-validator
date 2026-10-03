@@ -21,15 +21,21 @@ async function launch() {
     browser = null; page = null;
   }
 
+  const isRender = !!process.env.RENDER;
+
   browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: null,
+    headless: isRender ? true : false,   // headless on Render, visible locally
+    defaultViewport: isRender ? { width: 1280, height: 800 } : null,
+    executablePath: isRender
+      ? '/opt/render/.cache/puppeteer/chrome/linux-154.0.8037.57/chrome-linux64/chrome'
+      : undefined,                        // use bundled Chrome locally
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
-      "--start-maximized"
+      "--window-size=1280,800",
+      ...(isRender ? [] : ["--start-maximized"])
     ]
   });
 

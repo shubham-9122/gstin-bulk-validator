@@ -226,7 +226,18 @@ async function launchChrome(){
     const r=await fetch('/api/launch',{method:'POST'});
     const d=await r.json();
     if(!d.ok) throw new Error(d.error||'Failed');
-    btn.innerHTML='🌐 Chrome Opened';
+
+    if(d.cloudMode){
+      // Cloud/Render mode — open GST portal in new tab
+      window.open('https://services.gst.gov.in/services/searchtp','gst_tab');
+      btn.innerHTML='🌐 GST Portal Opened';
+      setMsg('loginAlert','ai','GST portal opened in a new tab. Log in there, then click "I\'m Logged In →"');
+    } else {
+      // Local mode — Puppeteer Chrome opened
+      btn.innerHTML='🌐 Chrome Opened';
+      setMsg('loginAlert','ai','Chrome opened. Log in to GST portal there, then click "I\'m Logged In →"');
+    }
+
     document.getElementById('btnDone').classList.remove('hidden');
     loginPoll=setInterval(async()=>{
       const s=await fetch('/api/login-status').then(r=>r.json()).catch(()=>({loggedIn:false}));

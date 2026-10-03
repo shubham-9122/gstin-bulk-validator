@@ -43,10 +43,16 @@ app.get("/api/events", (req, res) => {
 
 // ── Step 1: Open Chrome on GST login page ────────────────────────────────
 app.post("/api/launch", async (req, res) => {
+  // On Render (cloud), Chrome runs headless — user can't see the window
+  // So we redirect them to GST portal directly in their browser
+  if (process.env.RENDER) {
+    broadcast({ type: "status", message: "Cloud mode: Please log in to the GST portal in the new tab that opens." });
+    return res.json({ ok: true, cloudMode: true });
+  }
   try {
     await automation.launch();
     broadcast({ type: "status", message: "Chrome opened. Please log in to the GST portal." });
-    res.json({ ok: true });
+    res.json({ ok: true, cloudMode: false });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
