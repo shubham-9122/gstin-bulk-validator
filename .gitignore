@@ -1,0 +1,6 @@
+node_modules/
+server-out.txt
+server-err.txt
+test_*.js
+*.log
+.env
