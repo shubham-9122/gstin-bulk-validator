@@ -1,29 +1,29 @@
 /**
  * gstin-automation.js
  * Opens a REAL visible Chrome window.
- * - User logs in to GST portal manually
- * - For each GSTIN: tool types it in, user solves captcha + clicks Search
- * - Tool waits for result, scrapes it, emits via callback
+ * 1. User logs in to GST portal
+ * 2. For each GSTIN: tool types it in the search box
+ * 3. User solves CAPTCHA and clicks Search
+ * 4. Tool waits for result, scrapes it, moves to next
  */
 
 const puppeteer = require("puppeteer");
 
-const GST_SEARCH_URL = "https://services.gst.gov.in/services/searchtp";
-const GST_LOGIN_URL  = "https://services.gst.gov.in/services/login";
+const GST_URL = "https://services.gst.gov.in/services/searchtp";
 
 let browser = null;
 let page    = null;
-let state   = "idle"; // idle | login_wait | ready | running | done | error
 
-// ── Launch browser and navigate to login page ─────────────────────────────────
+// ── Launch visible Chrome on GST search page ─────────────────────────────
 async function launch() {
   if (browser) {
     try { await browser.close(); } catch (_) {}
+    browser = null; page = null;
   }
 
   browser = await puppeteer.launch({
-    headless: false,                       // VISIBLE Chrome window
-    defaultViewport: null,                 // Full window size
+    headless: false,
+    defaultViewport: null,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -40,179 +40,110 @@ async function launch() {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   );
 
-  // Detect if user closes Chrome
-  browser.on("disconnected", () => {
-    browser = null;
-    page    = null;
-    state   = "idle";
-  });
+  browser.on("disconnected", () => { browser = null; page = null; });
 
-  // Navigate to login
-  await page.goto(GST_LOGIN_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
-  state = "login_wait";
+  await page.goto(GST_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
 }
 
-// ── Poll until user is logged in (dashboard appears) ─────────────────────────
-async function waitForLogin(timeoutMs = 300000) {
-  if (!page) throw new Error("Browser not launched");
-
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (!browser || !page) throw new Error("Browser was closed");
-
-    const url = page.url();
-    // After login GST portal redirects to dashboard or home
-    if (url.includes("/services/dashboard") || url.includes("/services/home") ||
-        url.includes("auth/searchtpbypan")  || url.includes("auth/searchtp")) {
-      state = "ready";
-      return true;
-    }
-
-    // Also check if the top-right shows user name (logged in indicator)
-    const loggedIn = await page.evaluate(() => {
-      const txt = document.body.innerText || "";
-      return txt.includes("Welcome") || txt.includes("Dashboard") ||
-             !!document.querySelector(".user-info, .loggeduser, [class*='welcome'], [class*='user-name']");
-    }).catch(() => false);
-
-    if (loggedIn) {
-      state = "ready";
-      return true;
-    }
-
-    await new Promise(r => setTimeout(r, 1500));
+// ── Check if user is logged in ────────────────────────────────────────────
+async function checkLoggedIn() {
+  if (!page || !browser) return false;
+  try {
+    const url  = page.url();
+    const text = await page.evaluate(() => document.body.innerText || "");
+    // After login the portal shows username or dashboard link
+    const loggedIn =
+      url.includes("/auth/")    ||
+      url.includes("dashboard") ||
+      text.includes("Welcome")  ||
+      text.includes("Log Out")  ||
+      text.includes("Logout")   ||
+      !!await page.$(".user-name, .loggeduser, [class*='username']").catch(() => null);
+    return loggedIn;
+  } catch (_) {
+    return false;
   }
-  throw new Error("Login timeout — 5 minutes elapsed");
 }
 
-// ── Navigate to the Search Taxpayer page ──────────────────────────────────────
-async function goToSearchPage() {
-  if (!page) throw new Error("Browser not available");
+// ── Type a GSTIN into the search box ─────────────────────────────────────
+async function typeGSTIN(gstin) {
+  if (!page) throw new Error("Browser not open");
+
+  // Go to search page if not already there
   const url = page.url();
   if (!url.includes("searchtp")) {
-    await page.goto(GST_SEARCH_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
-    await new Promise(r => setTimeout(r, 3000));
+    await page.goto(GST_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await new Promise(r => setTimeout(r, 2000));
   }
-}
 
-// ── Type one GSTIN into the search box ───────────────────────────────────────
-async function typeGSTIN(gstin) {
-  await goToSearchPage();
-
-  // Wait for the GSTIN input
-  await page.waitForSelector("#for_gstin, input[name='for_gstin'], input[placeholder*='GSTIN']", {
-    timeout: 15000
-  });
+  // Wait for input
+  await page.waitForSelector("#for_gstin", { timeout: 10000 });
 
   // Clear and type
-  await page.click("#for_gstin, input[name='for_gstin'], input[placeholder*='GSTIN']");
+  await page.click("#for_gstin");
   await page.keyboard.down("Control");
   await page.keyboard.press("a");
   await page.keyboard.up("Control");
   await page.keyboard.press("Backspace");
-
-  await page.type(
-    "#for_gstin, input[name='for_gstin'], input[placeholder*='GSTIN']",
-    gstin,
-    { delay: 60 }
-  );
+  await new Promise(r => setTimeout(r, 300));
+  await page.type("#for_gstin", gstin, { delay: 80 });
 }
 
-// ── Wait for search result after user clicks Search ───────────────────────────
-// Waits up to `timeoutMs` for the result panel to appear, then scrapes it.
-async function waitForResult(gstin, timeoutMs = 120000) {
+// ── Wait for result after user solves CAPTCHA and clicks Search ───────────
+async function waitForResult(gstin, timeoutMs = 180000) {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
     if (!browser || !page) throw new Error("Browser was closed");
 
-    const result = await page.evaluate((g) => {
-      const body = document.body.innerText || "";
+    try {
+      const data = await page.evaluate((g) => {
+        const body = document.body.innerText || "";
 
-      // Look for known result indicators in the page
-      // The GST portal shows taxpayer name + status in a result card
-      const statusKeywords = {
-        "Active":    ["Active"],
-        "Cancelled": ["Cancelled", "Cancel"],
-        "Suspended": ["Suspended", "Suspend"]
-      };
+        // Result not shown yet if GSTIN isn't on the page
+        if (!body.includes(g)) return null;
 
-      // Check if we're still on the search page showing a result
-      // The result usually contains the GSTIN back + status label
-      if (!body.includes(g)) return null; // result not yet shown
-
-      // Try to find the status text near the GSTIN
-      let foundStatus = "Unknown";
-      for (const [status, keywords] of Object.entries(statusKeywords)) {
-        for (const kw of keywords) {
-          // Look for the keyword in proximity to common result labels
-          const hasIt = body.includes(kw);
-          if (hasIt) { foundStatus = status; break; }
+        // Check for "no record" messages
+        if (
+          body.includes("No record found") ||
+          body.includes("not found") ||
+          body.includes("Invalid GSTIN/UIN") ||
+          body.includes("does not exist")
+        ) {
+          return { gstin: g, status: "Not Found", legalName: "-", tradeName: "-", registrationDate: "-", gstnType: "-" };
         }
-        if (foundStatus !== "Unknown") break;
-      }
 
-      // Scrape structured data from result card
-      // GST portal renders result in a table/div with specific labels
-      const getText = (selector) => {
-        const el = document.querySelector(selector);
-        return el ? el.innerText.trim() : null;
-      };
+        // Detect status from page text
+        let status = "Unknown";
+        if (/\bActive\b/i.test(body))    status = "Active";
+        else if (/\bCancelled\b/i.test(body)) status = "Cancelled";
+        else if (/\bSuspended\b/i.test(body)) status = "Suspended";
+        else if (/\bProvisional\b/i.test(body)) status = "Provisional";
 
-      // Try multiple selector patterns used by the portal
-      const legalName = getText(".lgnm, [class*='lgnm'], td.ng-binding:nth-child(2)")
-        || scrapeLabel(body, "Legal Name")
-        || scrapeLabel(body, "Trade Name");
+        if (status === "Unknown") return null; // still loading
 
-      const tradeName = scrapeLabel(body, "Trade Name")
-        || scrapeLabel(body, "Principal Place");
+        // Scrape details from result table
+        function labelVal(label) {
+          const idx = body.indexOf(label);
+          if (idx === -1) return "-";
+          const after = body.substring(idx + label.length, idx + label.length + 150).trim();
+          const lines = after.split("\n").map(l => l.trim()).filter(l => l && l !== ":" && l !== "-");
+          return lines[0] || "-";
+        }
 
-      const regDate   = scrapeLabel(body, "Date of Registration")
-        || scrapeLabel(body, "Registration Date");
+        return {
+          gstin:            g,
+          status:           status,
+          legalName:        labelVal("Legal Name")         || labelVal("Trade Name"),
+          tradeName:        labelVal("Trade Name"),
+          registrationDate: labelVal("Date of Registration") || labelVal("Registration Date"),
+          gstnType:         labelVal("Constitution of Business") || labelVal("Taxpayer Type"),
+          stateCode:        g.substring(0, 2)
+        };
+      }, gstin);
 
-      const gstnType  = scrapeLabel(body, "Constitution of Business")
-        || scrapeLabel(body, "Taxpayer Type");
-
-      function scrapeLabel(text, label) {
-        const idx = text.indexOf(label);
-        if (idx === -1) return null;
-        const after = text.substring(idx + label.length, idx + label.length + 100).trim();
-        // Take first non-empty line after the label
-        const lines = after.split("\n").map(l => l.trim()).filter(l => l && l !== ":");
-        return lines[0] || null;
-      }
-
-      return {
-        gstin: g,
-        status: foundStatus,
-        legalName: legalName  || "-",
-        tradeName: tradeName  || "-",
-        registrationDate: regDate || "-",
-        gstnType: gstnType    || "-",
-        stateCode: g.substring(0, 2)
-      };
-    }, gstin);
-
-    if (result && result.status !== "Unknown") {
-      return result;
-    }
-
-    // Also check if "no records found" type message appeared
-    const noRecord = await page.evaluate((g) => {
-      const body = document.body.innerText || "";
-      return (body.includes("No record") || body.includes("not found") ||
-              body.includes("Invalid GSTIN") || body.includes("does not exist")) &&
-             body.includes(g);
-    }, gstin).catch(() => false);
-
-    if (noRecord) {
-      return {
-        gstin, status: "Not Found",
-        legalName: "-", tradeName: "-",
-        registrationDate: "-", gstnType: "-",
-        stateCode: gstin.substring(0, 2)
-      };
-    }
+      if (data) return data;
+    } catch (_) {}
 
     await new Promise(r => setTimeout(r, 1000));
   }
@@ -222,19 +153,18 @@ async function waitForResult(gstin, timeoutMs = 120000) {
     legalName: "-", tradeName: "-",
     registrationDate: "-", gstnType: "-",
     stateCode: gstin.substring(0, 2),
-    error: "No result appeared within timeout"
+    error: "No result appeared. Did you click Search?"
   };
 }
 
-// ── Full run: iterate through GSTINs, emit progress via callback ──────────────
+// ── Run all GSTINs in sequence ────────────────────────────────────────────
 async function runBatch(gstins, onProgress) {
-  state = "running";
   const results = [];
 
   for (let i = 0; i < gstins.length; i++) {
     const gstin = gstins[i].trim().toUpperCase();
 
-    // Validate format
+    // Validate format locally — no need to go to portal for bad format
     if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) {
       const r = {
         gstin, status: "Invalid Format",
@@ -248,36 +178,38 @@ async function runBatch(gstins, onProgress) {
       continue;
     }
 
-    // Tell frontend: "type this GSTIN"
+    // Tell frontend: typing now
     onProgress({ type: "typing", index: i, total: gstins.length, gstin });
 
     try {
       await typeGSTIN(gstin);
     } catch (e) {
-      const r = { gstin, status: "Error", legalName: "-", tradeName: "-",
-                  registrationDate: "-", gstnType: "-",
-                  stateCode: gstin.substring(0, 2), error: "Could not type GSTIN: " + e.message };
+      const r = {
+        gstin, status: "Error",
+        legalName: "-", tradeName: "-",
+        registrationDate: "-", gstnType: "-",
+        stateCode: gstin.substring(0, 2),
+        error: "Could not type GSTIN: " + e.message
+      };
       results.push(r);
       onProgress({ type: "result", index: i, total: gstins.length, result: r });
       continue;
     }
 
-    // Tell frontend: "waiting for user to solve captcha and click Search"
+    // Tell frontend: waiting for captcha
     onProgress({ type: "waiting_captcha", index: i, total: gstins.length, gstin });
 
-    // Wait for result (user solves captcha + clicks Search)
+    // Wait for user to solve captcha + click Search
     const result = await waitForResult(gstin);
     results.push(result);
     onProgress({ type: "result", index: i, total: gstins.length, result });
 
-    // Small pause before next
+    // Brief pause before next GSTIN
     if (i < gstins.length - 1) {
-      onProgress({ type: "next_in", index: i, total: gstins.length, gstin: gstins[i + 1] });
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
 
-  state = "done";
   onProgress({ type: "done", total: gstins.length, results });
   return results;
 }
@@ -285,12 +217,8 @@ async function runBatch(gstins, onProgress) {
 async function closeBrowser() {
   if (browser) {
     try { await browser.close(); } catch (_) {}
-    browser = null;
-    page    = null;
-    state   = "idle";
+    browser = null; page = null;
   }
 }
 
-function getState() { return state; }
-
-module.exports = { launch, waitForLogin, typeGSTIN, waitForResult, runBatch, closeBrowser, getState };
+module.exports = { launch, checkLoggedIn, typeGSTIN, waitForResult, runBatch, closeBrowser };
