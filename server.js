@@ -1,7 +1,9 @@
 /**
- * server.js — GSTIN Bulk Validator (Local Tool)
- * Opens real Chrome → user logs in → tool auto-types GSTINs →
- * user solves CAPTCHA + clicks Search → tool scrapes result
+ * server.js — GSTIN Bulk Validator
+ * - Opens real Chrome with remote debugging
+ * - User logs in to GST portal in that Chrome window
+ * - Puppeteer connects via CDP and auto-types GSTINs
+ * - User solves CAPTCHA, tool scrapes result
  */
 
 const express    = require("express");
@@ -22,8 +24,9 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// ── SSE: live progress to browser ─────────────────────────────────────────
+// ── SSE: stream live events to browser ───────────────────────────────────
 const sseClients = new Set();
+
 function broadcast(data) {
   const msg = `data: ${JSON.stringify(data)}\n\n`;
   for (const res of sseClients) {
@@ -37,28 +40,22 @@ app.get("/api/events", (req, res) => {
   res.setHeader("Connection",    "keep-alive");
   res.flushHeaders();
   sseClients.add(res);
-  const ping = setInterval(() => { try { res.write(": ping\n\n"); } catch(_) {} }, 20000);
+  const ping = setInterval(() => { try { res.write(": ping\n\n"); } catch (_) {} }, 20000);
   req.on("close", () => { sseClients.delete(res); clearInterval(ping); });
 });
 
-// ── Step 1: Open Chrome on GST login page ────────────────────────────────
+// ── POST /api/launch — open Chrome on GST portal ─────────────────────────
 app.post("/api/launch", async (req, res) => {
-  // On Render (cloud), Chrome runs headless — user can't see the window
-  // So we redirect them to GST portal directly in their browser
-  if (process.env.RENDER) {
-    broadcast({ type: "status", message: "Cloud mode: Please log in to the GST portal in the new tab that opens." });
-    return res.json({ ok: true, cloudMode: true });
-  }
   try {
     await automation.launch();
-    broadcast({ type: "status", message: "Chrome opened. Please log in to the GST portal." });
-    res.json({ ok: true, cloudMode: false });
+    broadcast({ type: "status", message: "Chrome opened on GST portal. Please log in." });
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// ── Step 2: Check login status ────────────────────────────────────────────
+// ── GET /api/login-status — check if user logged in ──────────────────────
 app.get("/api/login-status", async (req, res) => {
   try {
     const loggedIn = await automation.checkLoggedIn();
@@ -69,30 +66,37 @@ app.get("/api/login-status", async (req, res) => {
   }
 });
 
-// ── Step 3: Upload Excel → start batch ───────────────────────────────────
+// ── POST /api/start-batch — upload Excel and start validation ─────────────
 app.post("/api/start-batch", upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
   let gstins;
   try {
     gstins = await extractGSTINs(req.file.buffer, req.file.mimetype);
   } catch (e) {
     return res.status(400).json({ error: e.message });
   }
-  if (!gstins.length) return res.status(400).json({ error: "No GSTINs found in the file." });
+
+  if (!gstins.length) {
+    return res.status(400).json({ error: "No GSTINs found in the file." });
+  }
 
   res.json({ ok: true, total: gstins.length, gstins });
+
   broadcast({ type: "batch_start", total: gstins.length, gstins });
+
   automation.runBatch(gstins, (event) => broadcast(event))
     .catch(e => broadcast({ type: "error", message: e.message }));
 });
 
-// ── Step 4: Download Excel ────────────────────────────────────────────────
+// ── POST /api/download — download results as Excel ────────────────────────
 app.post("/api/download", async (req, res) => {
   const { results } = req.body;
   if (!results?.length) return res.status(400).json({ error: "No results." });
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("GSTIN Results");
+
   ws.columns = [
     { header: "S.No",              key: "sno",       width: 6  },
     { header: "GSTIN",             key: "gstin",     width: 20 },
@@ -104,12 +108,15 @@ app.post("/api/download", async (req, res) => {
     { header: "State Code",        key: "stateCode", width: 12 },
     { header: "Remarks",           key: "remarks",   width: 40 }
   ];
+
   const hdr = ws.getRow(1);
   hdr.font      = { bold: true, color: { argb: "FFFFFFFF" } };
   hdr.fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1A365D" } };
   hdr.alignment = { vertical: "middle", horizontal: "center" };
   hdr.height    = 22;
-  const colors  = { "Active": "FFC6F6D5", "Cancelled": "FFFED7D7", "Suspended": "FFFEFCBF" };
+
+  const colors = { "Active": "FFC6F6D5", "Cancelled": "FFFED7D7", "Suspended": "FFFEFCBF" };
+
   results.forEach((r, i) => {
     const row = ws.addRow({
       sno: i + 1, gstin: r.gstin, status: r.status,
@@ -117,11 +124,13 @@ app.post("/api/download", async (req, res) => {
       regDate: r.registrationDate || "-", gstnType: r.gstnType || "-",
       stateCode: r.stateCode || "-", remarks: r.error || ""
     });
-    row.getCell("status").fill      = { type: "pattern", pattern: "solid", fgColor: { argb: colors[r.status] || "FFE9D8FD" } };
+    const clr = colors[r.status] || "FFE9D8FD";
+    row.getCell("status").fill      = { type: "pattern", pattern: "solid", fgColor: { argb: clr } };
     row.getCell("status").font      = { bold: true };
     row.getCell("status").alignment = { horizontal: "center" };
     row.getCell("gstin").font       = { name: "Courier New" };
   });
+
   ws.views = [{ state: "frozen", ySplit: 1 }];
   res.setHeader("Content-Disposition", "attachment; filename=GSTIN_Results.xlsx");
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -129,22 +138,16 @@ app.post("/api/download", async (req, res) => {
   res.end();
 });
 
-// Record result sent from frontend (scraped from portal tab)
-app.post("/api/record-result", (req, res) => {
-  const result = req.body;
-  if (result && result.gstin) {
-    broadcast({ type: "result", index: 0, total: 0, result });
-  }
-  res.json({ ok: true });
-});
-
+// ── POST /api/close — close Chrome ───────────────────────────────────────
 app.post("/api/close", async (req, res) => {
   await automation.closeBrowser().catch(() => {});
   res.json({ ok: true });
 });
 
+// ── GET /health ───────────────────────────────────────────────────────────
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
+// ── Extract GSTINs from Excel/CSV ─────────────────────────────────────────
 async function extractGSTINs(buffer, mimetype) {
   const found = new Set();
   if (mimetype && mimetype.includes("csv")) {

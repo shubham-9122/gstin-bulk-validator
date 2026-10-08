@@ -1,135 +1,204 @@
 /**
  * gstin-automation.js
- * Opens a REAL visible Chrome window.
- * 1. User logs in to GST portal
- * 2. For each GSTIN: tool types it in the search box
- * 3. User solves CAPTCHA and clicks Search
- * 4. Tool waits for result, scrapes it, moves to next
+ * 
+ * Approach:
+ * - Opens a NEW visible Chrome window with remote debugging enabled
+ * - User logs in to GST portal in that Chrome window
+ * - Puppeteer connects to that same Chrome via CDP (no separate browser)
+ * - For each GSTIN: Puppeteer types it into the search box automatically
+ * - User solves CAPTCHA and clicks Search in that same Chrome window
+ * - Puppeteer waits and scrapes the result
  */
 
 const puppeteer = require("puppeteer");
+const { execSync, spawn } = require("child_process");
+const path = require("path");
 
-const GST_URL = "https://services.gst.gov.in/services/searchtp";
+const GST_URL   = "https://services.gst.gov.in/services/searchtp";
+const DEBUG_PORT = 9222;
 
-let browser = null;
-let page    = null;
+let browser  = null;
+let page     = null;
+let chromeProcess = null;
 
-// ── Launch visible Chrome on GST search page ─────────────────────────────
+// ── Find Chrome executable path ───────────────────────────────────────────
+function findChrome() {
+  const paths = [
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    process.env.LOCALAPPDATA + "\\Google\\Chrome\\Application\\chrome.exe",
+    // Edge as fallback
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+  ];
+  for (const p of paths) {
+    try {
+      require("fs").accessSync(p);
+      return p;
+    } catch (_) {}
+  }
+  return null;
+}
+
+// ── Launch Chrome with remote debugging ───────────────────────────────────
 async function launch() {
+  // Kill any previous instance
+  if (chromeProcess) {
+    try { chromeProcess.kill(); } catch (_) {}
+    chromeProcess = null;
+  }
   if (browser) {
-    try { await browser.close(); } catch (_) {}
+    try { await browser.disconnect(); } catch (_) {}
     browser = null; page = null;
   }
 
-  const isRender = !!process.env.RENDER;
+  const chromePath = findChrome();
+  if (!chromePath) throw new Error("Chrome or Edge not found. Please install Google Chrome.");
 
-  browser = await puppeteer.launch({
-    headless: isRender ? true : false,   // headless on Render, visible locally
-    defaultViewport: isRender ? { width: 1280, height: 800 } : null,
-    executablePath: isRender
-      ? '/opt/render/.cache/puppeteer/chrome/linux-154.0.8037.57/chrome-linux64/chrome'
-      : undefined,                        // use bundled Chrome locally
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--window-size=1280,800",
-      ...(isRender ? [] : ["--start-maximized"])
-    ]
+  // Launch Chrome with remote debugging port open
+  chromeProcess = spawn(chromePath, [
+    `--remote-debugging-port=${DEBUG_PORT}`,
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--start-maximized",
+    GST_URL
+  ], { detached: true, stdio: "ignore" });
+
+  chromeProcess.unref();
+
+  // Wait for Chrome to start and open the debug port
+  await waitForDebugPort(DEBUG_PORT, 15000);
+}
+
+// ── Wait for Chrome debug port to be ready ────────────────────────────────
+async function waitForDebugPort(port, timeoutMs) {
+  const http    = require("http");
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const ready = await new Promise(resolve => {
+      const req = http.get(`http://localhost:${port}/json/version`, res => {
+        resolve(res.statusCode === 200);
+      });
+      req.on("error", () => resolve(false));
+      req.setTimeout(1000, () => { req.destroy(); resolve(false); });
+    });
+    if (ready) return;
+    await new Promise(r => setTimeout(r, 500));
+  }
+  throw new Error("Chrome did not start in time.");
+}
+
+// ── Connect Puppeteer to the running Chrome ───────────────────────────────
+async function connectPuppeteer() {
+  if (browser) return;
+  browser = await puppeteer.connect({
+    browserURL: `http://localhost:${DEBUG_PORT}`,
+    defaultViewport: null
   });
-
-  const pages = await browser.pages();
-  page = pages[0] || await browser.newPage();
-
-  await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  );
-
-  browser.on("disconnected", () => { browser = null; page = null; });
-
-  await page.goto(GST_URL, { waitUntil: "domcontentloaded", timeout: 30000 });
 }
 
 // ── Check if user is logged in ────────────────────────────────────────────
 async function checkLoggedIn() {
-  if (!page || !browser) return false;
   try {
-    const url  = page.url();
-    const text = await page.evaluate(() => document.body.innerText || "");
-    // After login the portal shows username or dashboard link
-    const loggedIn =
-      url.includes("/auth/")    ||
-      url.includes("dashboard") ||
-      text.includes("Welcome")  ||
-      text.includes("Log Out")  ||
-      text.includes("Logout")   ||
-      !!await page.$(".user-name, .loggeduser, [class*='username']").catch(() => null);
-    return loggedIn;
+    await connectPuppeteer();
+    const pages = await browser.pages();
+    for (const p of pages) {
+      const url  = p.url();
+      const text = await p.evaluate(() => document.body?.innerText || "").catch(() => "");
+      if (
+        url.includes("/auth/") ||
+        url.includes("dashboard") ||
+        text.includes("Log Out") ||
+        text.includes("Logout") ||
+        text.includes("Welcome,")
+      ) return true;
+    }
+    return false;
   } catch (_) {
     return false;
   }
 }
 
+// ── Get or create the GST search page ────────────────────────────────────
+async function getGSTPage() {
+  await connectPuppeteer();
+  const pages = await browser.pages();
+
+  // Find existing GST tab
+  for (const p of pages) {
+    if (p.url().includes("services.gst.gov.in")) {
+      page = p;
+      return page;
+    }
+  }
+
+  // Open new tab
+  page = await browser.newPage();
+  await page.goto(GST_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
+  await new Promise(r => setTimeout(r, 3000));
+  return page;
+}
+
 // ── Type a GSTIN into the search box ─────────────────────────────────────
 async function typeGSTIN(gstin) {
-  if (!page) throw new Error("Browser not open");
+  const p = await getGSTPage();
 
-  // Go to search page if not already there
-  const url = page.url();
-  if (!url.includes("searchtp")) {
-    await page.goto(GST_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
-    await new Promise(r => setTimeout(r, 2000));
+  // Navigate to search page if needed
+  if (!p.url().includes("searchtp")) {
+    await p.goto(GST_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await new Promise(r => setTimeout(r, 3000));
   }
 
   // Wait for input
-  await page.waitForSelector("#for_gstin", { timeout: 10000 });
+  await p.waitForSelector("#for_gstin", { timeout: 10000 });
 
-  // Clear and type
-  await page.click("#for_gstin");
-  await page.keyboard.down("Control");
-  await page.keyboard.press("a");
-  await page.keyboard.up("Control");
-  await page.keyboard.press("Backspace");
+  // Clear existing value and type new GSTIN
+  await p.click("#for_gstin");
+  await p.keyboard.down("Control");
+  await p.keyboard.press("a");
+  await p.keyboard.up("Control");
+  await p.keyboard.press("Backspace");
   await new Promise(r => setTimeout(r, 300));
-  await page.type("#for_gstin", gstin, { delay: 80 });
+  await p.type("#for_gstin", gstin, { delay: 80 });
+
+  // Bring Chrome window to front so user can see the CAPTCHA
+  await p.bringToFront();
 }
 
 // ── Wait for result after user solves CAPTCHA and clicks Search ───────────
 async function waitForResult(gstin, timeoutMs = 180000) {
+  const p       = await getGSTPage();
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    if (!browser || !page) throw new Error("Browser was closed");
+    if (!browser) throw new Error("Browser was closed");
 
     try {
-      const data = await page.evaluate((g) => {
-        const body = document.body.innerText || "";
-
-        // Result not shown yet if GSTIN isn't on the page
+      const data = await p.evaluate((g) => {
+        const body = document.body?.innerText || "";
         if (!body.includes(g)) return null;
 
-        // Check for "no record" messages
+        // No record found
         if (
           body.includes("No record found") ||
-          body.includes("not found") ||
-          body.includes("Invalid GSTIN/UIN") ||
+          body.includes("Invalid GSTIN") ||
           body.includes("does not exist")
         ) {
-          return { gstin: g, status: "Not Found", legalName: "-", tradeName: "-", registrationDate: "-", gstnType: "-" };
+          return { gstin: g, status: "Not Found", legalName: "-", tradeName: "-",
+                   registrationDate: "-", gstnType: "-" };
         }
 
-        // Detect status from page text
+        // Detect status
         let status = "Unknown";
-        if (/\bActive\b/i.test(body))    status = "Active";
+        if      (/\bActive\b/i.test(body))    status = "Active";
         else if (/\bCancelled\b/i.test(body)) status = "Cancelled";
         else if (/\bSuspended\b/i.test(body)) status = "Suspended";
         else if (/\bProvisional\b/i.test(body)) status = "Provisional";
 
-        if (status === "Unknown") return null; // still loading
+        if (status === "Unknown") return null;
 
-        // Scrape details from result table
-        function labelVal(label) {
+        // Scrape details
+        function lv(label) {
           const idx = body.indexOf(label);
           if (idx === -1) return "-";
           const after = body.substring(idx + label.length, idx + label.length + 150).trim();
@@ -138,12 +207,12 @@ async function waitForResult(gstin, timeoutMs = 180000) {
         }
 
         return {
-          gstin:            g,
-          status:           status,
-          legalName:        labelVal("Legal Name")         || labelVal("Trade Name"),
-          tradeName:        labelVal("Trade Name"),
-          registrationDate: labelVal("Date of Registration") || labelVal("Registration Date"),
-          gstnType:         labelVal("Constitution of Business") || labelVal("Taxpayer Type"),
+          gstin,
+          status,
+          legalName:        lv("Legal Name")            || lv("Trade Name"),
+          tradeName:        lv("Trade Name"),
+          registrationDate: lv("Date of Registration")  || lv("Registration Date"),
+          gstnType:         lv("Constitution of Business") || lv("Taxpayer Type"),
           stateCode:        g.substring(0, 2)
         };
       }, gstin);
@@ -159,18 +228,17 @@ async function waitForResult(gstin, timeoutMs = 180000) {
     legalName: "-", tradeName: "-",
     registrationDate: "-", gstnType: "-",
     stateCode: gstin.substring(0, 2),
-    error: "No result appeared. Did you click Search?"
+    error: "No result in 3 minutes. Did you solve the CAPTCHA?"
   };
 }
 
-// ── Run all GSTINs in sequence ────────────────────────────────────────────
+// ── Run all GSTINs ────────────────────────────────────────────────────────
 async function runBatch(gstins, onProgress) {
   const results = [];
 
   for (let i = 0; i < gstins.length; i++) {
     const gstin = gstins[i].trim().toUpperCase();
 
-    // Validate format locally — no need to go to portal for bad format
     if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) {
       const r = {
         gstin, status: "Invalid Format",
@@ -184,36 +252,26 @@ async function runBatch(gstins, onProgress) {
       continue;
     }
 
-    // Tell frontend: typing now
+    // Type GSTIN
     onProgress({ type: "typing", index: i, total: gstins.length, gstin });
-
     try {
       await typeGSTIN(gstin);
     } catch (e) {
-      const r = {
-        gstin, status: "Error",
-        legalName: "-", tradeName: "-",
-        registrationDate: "-", gstnType: "-",
-        stateCode: gstin.substring(0, 2),
-        error: "Could not type GSTIN: " + e.message
-      };
+      const r = { gstin, status: "Error", legalName: "-", tradeName: "-",
+                  registrationDate: "-", gstnType: "-",
+                  stateCode: gstin.substring(0, 2), error: e.message };
       results.push(r);
       onProgress({ type: "result", index: i, total: gstins.length, result: r });
       continue;
     }
 
-    // Tell frontend: waiting for captcha
+    // Wait for captcha + result
     onProgress({ type: "waiting_captcha", index: i, total: gstins.length, gstin });
-
-    // Wait for user to solve captcha + click Search
     const result = await waitForResult(gstin);
     results.push(result);
     onProgress({ type: "result", index: i, total: gstins.length, result });
 
-    // Brief pause before next GSTIN
-    if (i < gstins.length - 1) {
-      await new Promise(r => setTimeout(r, 1000));
-    }
+    if (i < gstins.length - 1) await new Promise(r => setTimeout(r, 1500));
   }
 
   onProgress({ type: "done", total: gstins.length, results });
@@ -221,10 +279,8 @@ async function runBatch(gstins, onProgress) {
 }
 
 async function closeBrowser() {
-  if (browser) {
-    try { await browser.close(); } catch (_) {}
-    browser = null; page = null;
-  }
+  if (browser) { try { await browser.disconnect(); } catch (_) {} browser = null; page = null; }
+  if (chromeProcess) { try { chromeProcess.kill(); } catch (_) {} chromeProcess = null; }
 }
 
 module.exports = { launch, checkLoggedIn, typeGSTIN, waitForResult, runBatch, closeBrowser };

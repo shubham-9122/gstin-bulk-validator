@@ -7,14 +7,15 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a202c;min-height:100vh}
-.hdr{background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;
-     padding:18px 32px;display:flex;align-items:center;gap:14px;
-     box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.hdr{background:linear-gradient(135deg,#1a365d,#2b6cb0);color:#fff;padding:18px 32px;
+     display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
 .hdr h1{font-size:20px;font-weight:700}
 .hdr p{font-size:12px;opacity:.85;margin-top:2px}
 .wrap{max-width:1000px;margin:28px auto;padding:0 18px;display:flex;flex-direction:column;gap:20px}
 .card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);padding:24px 28px}
 .card h2{font-size:15px;font-weight:700;color:#1a365d;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* steps */
 .steps{display:flex;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden}
 .step{flex:1;padding:14px 16px;display:flex;align-items:center;gap:10px;border-right:1px solid #e2e8f0}
 .step:last-child{border-right:none}
@@ -25,51 +26,76 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a202c;m
 .step.active  .st .t{color:#2b6cb0}
 .step.done    .sn{background:#38a169;color:#fff}
 .step.done    .st .t{color:#38a169}
-.btn{padding:10px 22px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+
+/* buttons */
+.btn{padding:10px 22px;border-radius:8px;border:none;font-size:13px;font-weight:700;
+     cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
 .bb{background:#2b6cb0;color:#fff}.bb:hover{background:#1a365d}.bb:disabled{background:#a0aec0;cursor:not-allowed}
 .bg{background:#38a169;color:#fff}.bg:hover{background:#276749}
 .bo{background:#fff;color:#2b6cb0;border:1.5px solid #2b6cb0}.bo:hover{background:#ebf8ff}
 .brow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.drop{border:2.5px dashed #90cdf4;border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;background:#ebf8ff;transition:.2s}
+
+/* drop zone */
+.drop{border:2.5px dashed #90cdf4;border-radius:10px;padding:40px 20px;text-align:center;
+      cursor:pointer;background:#ebf8ff;transition:.2s}
 .drop:hover,.drop.over{border-color:#2b6cb0;background:#bee3f8}
 .drop .ico{font-size:42px;margin-bottom:8px}
 .drop .mt{font-size:15px;font-weight:600;color:#2b6cb0}
 .drop .st{font-size:12px;color:#718096;margin-top:3px}
-.fok{margin-top:10px;padding:8px 14px;background:#c6f6d5;border-radius:8px;font-size:13px;color:#276749;font-weight:600;display:none;align-items:center;gap:8px}
-.banner{padding:13px 18px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.fok{margin-top:10px;padding:8px 14px;background:#c6f6d5;border-radius:8px;
+     font-size:13px;color:#276749;font-weight:600;display:none;align-items:center;gap:8px}
+
+/* banner */
+.banner{padding:13px 18px;border-radius:10px;font-size:14px;font-weight:600;
+        display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .bn-info{background:#ebf8ff;color:#2b6cb0;border:1.5px solid #bee3f8}
-.bn-ok{background:#c6f6d5;color:#276749;border:1.5px solid #9ae6b4}
+.bn-ok  {background:#c6f6d5;color:#276749;border:1.5px solid #9ae6b4}
 .bn-warn{background:#fefcbf;color:#975a16;border:1.5px solid #faf089}
-.bn-err{background:#fed7d7;color:#c53030;border:1.5px solid #feb2b2}
+.bn-err {background:#fed7d7;color:#c53030;border:1.5px solid #feb2b2}
+
+/* current GSTIN */
 .cur{background:#1a365d;color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:14px;display:none}
 .cur .lbl{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.8px}
 .cur .g{font-family:'Courier New',monospace;font-size:22px;font-weight:700;letter-spacing:2px;margin:6px 0}
 .cur .sub{font-size:12px;opacity:.8}
 .pulse{animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* progress */
 .prog{margin-bottom:14px}
 .pl{display:flex;justify-content:space-between;font-size:12px;color:#4a5568;margin-bottom:4px}
 .pbg{background:#e2e8f0;border-radius:999px;height:9px;overflow:hidden}
 .pf{height:100%;background:linear-gradient(90deg,#2b6cb0,#4299e1);border-radius:999px;width:0%;transition:width .35s}
+
+/* summary */
 .sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin-bottom:16px}
 .sb{border-radius:10px;padding:12px;text-align:center}
 .sb .n{font-size:26px;font-weight:700}.sb .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 .s0{background:#ebf8ff;color:#2b6cb0}.s1{background:#c6f6d5;color:#276749}
 .s2{background:#fed7d7;color:#c53030}.s3{background:#fefcbf;color:#975a16}.s4{background:#e2e8f0;color:#4a5568}
+
+/* tabs */
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.tab{padding:4px 13px;border-radius:999px;border:1.5px solid #e2e8f0;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#4a5568;transition:.15s}
+.tab{padding:4px 13px;border-radius:999px;border:1.5px solid #e2e8f0;background:#fff;
+     font-size:12px;font-weight:600;cursor:pointer;color:#4a5568;transition:.15s}
 .tab:hover{border-color:#2b6cb0;color:#2b6cb0}.tab.on{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+
+/* table */
 .tw{overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;max-height:400px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#1a365d;color:#fff;padding:10px 12px;text-align:left;font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:1}
 tbody tr:nth-child(even){background:#f7fafc}tbody tr:hover{background:#ebf8ff}
 tbody tr.hl{animation:hl .7s ease}@keyframes hl{0%{background:#ffd700}100%{background:inherit}}
 tbody td{padding:9px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+
+/* badges */
 .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700}
 .ba{background:#c6f6d5;color:#276749}.bc{background:#fed7d7;color:#c53030}
 .bs{background:#fefcbf;color:#975a16}.bi{background:#e2e8f0;color:#4a5568}
 .be{background:#fed7d7;color:#c53030}.bu{background:#e9d8fd;color:#553c9a}
-.spin{display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+
+.spin{display:inline-block;width:14px;height:14px;border:2.5px solid rgba(255,255,255,.4);
+      border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px}
 .ae{background:#fed7d7;color:#c53030}.ao{background:#c6f6d5;color:#276749}.ai{background:#ebf8ff;color:#2b6cb0}
@@ -77,36 +103,41 @@ tbody td{padding:9px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
 </style>
 </head>
 <body>
+
 <div class="hdr">
   <div style="font-size:30px">🏛️</div>
-  <div><h1>GSTIN Bulk Validator</h1><p>Auto-types GSTINs · You solve CAPTCHA · Tool captures results</p></div>
+  <div>
+    <h1>GSTIN Bulk Validator</h1>
+    <p>Opens GST portal in Chrome · Auto-types GSTINs · You solve CAPTCHA · Results captured automatically</p>
+  </div>
 </div>
+
 <div class="wrap">
 
   <!-- Steps -->
   <div class="steps">
-    <div class="step active"  id="s1"><div class="sn">1</div><div class="st"><div class="t">Login</div><div class="s">GST Portal</div></div></div>
-    <div class="step pending" id="s2"><div class="sn">2</div><div class="st"><div class="t">Upload Excel</div><div class="s">GSTIN list</div></div></div>
+    <div class="step active"  id="s1"><div class="sn">1</div><div class="st"><div class="t">Login</div><div class="s">Open GST Portal</div></div></div>
+    <div class="step pending" id="s2"><div class="sn">2</div><div class="st"><div class="t">Upload Excel</div><div class="s">Your GSTIN list</div></div></div>
     <div class="step pending" id="s3"><div class="sn">3</div><div class="st"><div class="t">Auto-Validate</div><div class="s">Solve CAPTCHAs</div></div></div>
     <div class="step pending" id="s4"><div class="sn">4</div><div class="st"><div class="t">Download</div><div class="s">Excel Results</div></div></div>
   </div>
 
-  <!-- Step 1 -->
+  <!-- Step 1: Login -->
   <div class="card" id="cardLogin">
-    <h2>🔐 Step 1 — Login to GST Portal</h2>
-    <p style="font-size:13px;color:#4a5568;line-height:1.7;margin-bottom:14px">
-      Click below — a Chrome window opens on the GST portal.<br>
-      Log in with your <strong>Username, Password &amp; CAPTCHA</strong>.<br>
-      Once logged in, click <strong>"I'm Logged In →"</strong> below.
+    <h2>🔐 Step 1 — Open GST Portal &amp; Login</h2>
+    <p style="font-size:13px;color:#4a5568;line-height:1.8;margin-bottom:14px">
+      Click below — Chrome opens with the GST portal search page.<br>
+      <strong>Log in</strong> with your Username, Password &amp; CAPTCHA in that Chrome window.<br>
+      Once logged in, come back here and click <strong>"I'm Logged In →"</strong>
     </p>
     <div class="brow" style="margin-top:0">
-      <button class="btn bb" id="btnLaunch" onclick="launchChrome()">🌐 Open GST Portal Login</button>
+      <button class="btn bb" id="btnLaunch" onclick="launchChrome()">🌐 Open GST Portal in Chrome</button>
       <button class="btn bg hidden" id="btnDone" onclick="confirmLogin()">✅ I'm Logged In →</button>
     </div>
     <div id="loginAlert"></div>
   </div>
 
-  <!-- Step 2 -->
+  <!-- Step 2: Upload -->
   <div class="card hidden" id="cardUpload">
     <h2>📊 Step 2 — Upload Excel with GSTINs</h2>
     <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
@@ -127,21 +158,26 @@ tbody td{padding:9px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
     <div id="uploadAlert"></div>
   </div>
 
-  <!-- Step 3 -->
+  <!-- Step 3: Live validation -->
   <div class="card hidden" id="cardRun">
-    <h2>⚡ Step 3 — Live Validation</h2>
+    <h2>⚡ Step 3 — Live Validation in Progress</h2>
+
     <div class="cur" id="curBox">
       <div class="lbl">Currently validating</div>
       <div class="g pulse" id="curG">—</div>
       <div class="sub" id="curSub">Preparing…</div>
     </div>
+
     <div class="banner bn-info" id="banner">
-      <span id="bIcon">ℹ️</span><span id="bMsg">Starting…</span>
+      <span id="bIcon">ℹ️</span>
+      <span id="bMsg">Starting…</span>
     </div>
+
     <div class="prog">
       <div class="pl"><span id="pTxt">0 / 0</span><span id="pPct">0%</span></div>
       <div class="pbg"><div class="pf" id="pFill"></div></div>
     </div>
+
     <div class="sum">
       <div class="sb s0"><div class="n" id="cT">0</div><div class="l">Total</div></div>
       <div class="sb s1"><div class="n" id="cA">0</div><div class="l">Active</div></div>
@@ -149,6 +185,7 @@ tbody td{padding:9px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
       <div class="sb s3"><div class="n" id="cS">0</div><div class="l">Suspended</div></div>
       <div class="sb s4"><div class="n" id="cO">0</div><div class="l">Other</div></div>
     </div>
+
     <div class="tabs">
       <button class="tab on" onclick="filt('All',this)">All</button>
       <button class="tab" onclick="filt('Active',this)">Active</button>
@@ -156,23 +193,31 @@ tbody td{padding:9px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
       <button class="tab" onclick="filt('Suspended',this)">Suspended</button>
       <button class="tab" onclick="filt('Other',this)">Other</button>
     </div>
+
     <div class="tw">
       <table>
-        <thead><tr><th>#</th><th>GSTIN</th><th>Status</th><th>Legal Name</th><th>Trade Name</th><th>Reg. Date</th><th>Type</th><th>State</th></tr></thead>
+        <thead>
+          <tr><th>#</th><th>GSTIN</th><th>Status</th><th>Legal Name</th>
+              <th>Trade Name</th><th>Reg. Date</th><th>Type</th><th>State</th></tr>
+        </thead>
         <tbody id="tb"></tbody>
       </table>
     </div>
+
     <div class="brow" style="margin-top:16px">
       <button class="btn bg hidden" id="btnDl" onclick="dlResults()">⬇ Download Excel</button>
+      <button class="btn bo hidden" id="btnClose" onclick="closeSession()">✖ Close Chrome</button>
     </div>
   </div>
 
 </div>
-<script>
-let allResults=[],pickedFile=null,af='All',counts={Active:0,Cancelled:0,Suspended:0,Other:0};
-let loginPoll=null;
 
-// SSE
+<script>
+let allResults=[], pickedFile=null, af='All';
+let counts={Active:0,Cancelled:0,Suspended:0,Other:0};
+let loginPoll=null, total=0;
+
+// SSE connection
 (function sse(){
   const es=new EventSource('/api/events');
   es.onmessage=e=>{try{onEv(JSON.parse(e.data));}catch(_){}};
@@ -181,74 +226,87 @@ let loginPoll=null;
 
 function onEv(ev){
   if(ev.type==='status') setBanner('info','ℹ️',ev.message);
+
   if(ev.type==='batch_start'){
+    total=ev.total;
     allResults=[];counts={Active:0,Cancelled:0,Suspended:0,Other:0};
-    updateSum();setP(0,ev.total);
+    updateSum();setP(0,total);
     document.getElementById('cardRun').classList.remove('hidden');
     document.getElementById('curBox').style.display='block';
-    setStep(3);setBanner('info','⚡',`Starting — ${ev.total} GSTINs`);
+    document.getElementById('btnClose').classList.remove('hidden');
+    setStep(3);
+    setBanner('info','⚡',`Starting — ${total} GSTINs to validate`);
   }
+
   if(ev.type==='typing'){
     document.getElementById('curG').textContent=ev.gstin;
-    document.getElementById('curSub').textContent=`(${ev.index+1}/${ev.total}) Typing…`;
-    setBanner('info','⌨️',`Typing <strong>${ev.gstin}</strong> into portal…`);
+    document.getElementById('curSub').textContent=`(${ev.index+1}/${ev.total}) Typing into Chrome…`;
+    setBanner('info','⌨️',`Typing <strong>${ev.gstin}</strong> into GST portal…`);
   }
+
   if(ev.type==='waiting_captcha'){
     document.getElementById('curG').textContent=ev.gstin;
-    document.getElementById('curSub').textContent=`(${ev.index+1}/${ev.total}) Waiting for you…`;
-    setBanner('warn','🔐',`GSTIN typed ✔ → <strong>Solve CAPTCHA &amp; click Search</strong> in Chrome!`);
-    flashTitle('⚠️ SOLVE CAPTCHA!');
+    document.getElementById('curSub').textContent=`(${ev.index+1}/${ev.total}) Waiting for CAPTCHA…`;
+    setBanner('warn','🔐',
+      `GSTIN typed ✔ &nbsp;→&nbsp; <strong>Switch to Chrome, solve CAPTCHA &amp; click Search!</strong>`);
+    flashTitle('⚠️ SOLVE CAPTCHA NOW!');
   }
+
   if(ev.type==='result'){
     const r=ev.result;
-    if(r.status==='Active') counts.Active++;
+    if(r.status==='Active')         counts.Active++;
     else if(r.status==='Cancelled') counts.Cancelled++;
     else if(r.status==='Suspended') counts.Suspended++;
-    else counts.Other++;
-    allResults.push(r);addRow(r,allResults.length);
-    updateSum();setP(allResults.length,ev.total||allResults.length);
+    else                             counts.Other++;
+    allResults.push(r);
+    addRow(r,allResults.length);
+    updateSum();
+    setP(allResults.length,total||allResults.length);
     setBanner('ok','✅',`<strong>${r.gstin}</strong> → ${r.status}`);
   }
+
   if(ev.type==='done'){
     document.getElementById('curBox').style.display='none';
     setBanner('ok','🎉',`All ${ev.total} GSTINs validated! Click Download below.`);
     document.getElementById('btnDl').classList.remove('hidden');
     setStep(4);
   }
+
   if(ev.type==='error') setBanner('err','❌',ev.message);
 }
 
 // Step 1
 async function launchChrome(){
   const btn=document.getElementById('btnLaunch');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Opening…';
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span> Opening Chrome…';
   try{
     const r=await fetch('/api/launch',{method:'POST'});
     const d=await r.json();
-    if(!d.ok) throw new Error(d.error||'Failed');
-
-    if(d.cloudMode){
-      // Cloud/Render mode — open GST portal in new tab
-      window.open('https://services.gst.gov.in/services/searchtp','gst_tab');
-      btn.innerHTML='🌐 GST Portal Opened';
-      setMsg('loginAlert','ai','GST portal opened in a new tab. Log in there, then click "I\'m Logged In →"');
-    } else {
-      // Local mode — Puppeteer Chrome opened
-      btn.innerHTML='🌐 Chrome Opened';
-      setMsg('loginAlert','ai','Chrome opened. Log in to GST portal there, then click "I\'m Logged In →"');
-    }
-
+    if(!d.ok) throw new Error(d.error||'Failed to open Chrome');
+    btn.innerHTML='🌐 Chrome Opened';
     document.getElementById('btnDone').classList.remove('hidden');
+    setMsg('loginAlert','ai','✅ Chrome opened with GST portal. Log in there, then click "I\'m Logged In →"');
+    // Auto-poll for login
     loginPoll=setInterval(async()=>{
-      const s=await fetch('/api/login-status').then(r=>r.json()).catch(()=>({loggedIn:false}));
-      if(s.loggedIn){clearInterval(loginPoll);showStep2();}
+      try{
+        const s=await fetch('/api/login-status').then(r=>r.json());
+        if(s.loggedIn){clearInterval(loginPoll);onLoggedIn();}
+      }catch(_){}
     },2000);
   }catch(e){
-    btn.disabled=false;btn.innerHTML='🌐 Open GST Portal Login';
+    btn.disabled=false;
+    btn.innerHTML='🌐 Open GST Portal in Chrome';
     setMsg('loginAlert','ae','❌ '+e.message);
   }
 }
-function confirmLogin(){clearInterval(loginPoll);showStep2();}
+
+function onLoggedIn(){
+  clearInterval(loginPoll);
+  setMsg('loginAlert','ao','✅ Login detected automatically!');
+  setTimeout(showStep2,800);
+}
+function confirmLogin(){ clearInterval(loginPoll); showStep2(); }
 function showStep2(){
   document.getElementById('cardLogin').style.opacity='.6';
   document.getElementById('cardUpload').classList.remove('hidden');
@@ -268,13 +326,14 @@ function setFile(f){
   b.innerHTML=`✅ ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
   b.style.display='flex';
   document.getElementById('btnStart').disabled=false;
+  setMsg('uploadAlert','','');
 }
 async function startBatch(){
   if(!pickedFile) return;
   const btn=document.getElementById('btnStart');
   document.getElementById('btnStartTxt').innerHTML='<span class="spin"></span> Reading…';
   btn.disabled=true;
-  const fd=new FormData();fd.append('file',pickedFile);
+  const fd=new FormData(); fd.append('file',pickedFile);
   try{
     const r=await fetch('/api/start-batch',{method:'POST',body:fd});
     const d=await r.json();
@@ -290,29 +349,48 @@ async function startBatch(){
 // Table
 function addRow(r,idx){
   const tr=document.createElement('tr');
-  tr.dataset.status=r.status;tr.classList.add('hl');
-  tr.innerHTML=`<td>${idx}</td><td style="font-family:monospace;font-weight:700">${r.gstin}</td>
-    <td>${badge(r.status)}</td><td>${r.legalName||'-'}</td><td>${r.tradeName||'-'}</td>
-    <td>${r.registrationDate||'-'}</td><td>${r.gstnType||'-'}</td><td>${r.stateCode||'-'}</td>`;
+  tr.dataset.status=r.status; tr.classList.add('hl');
+  tr.innerHTML=`<td>${idx}</td>
+    <td style="font-family:monospace;font-weight:700">${r.gstin}</td>
+    <td>${badge(r.status)}</td>
+    <td>${r.legalName||'-'}</td>
+    <td>${r.tradeName||'-'}</td>
+    <td>${r.registrationDate||'-'}</td>
+    <td>${r.gstnType||'-'}</td>
+    <td>${r.stateCode||'-'}</td>`;
   if(af!=='All'){
-    const show=af==='Other'?!['Active','Cancelled','Suspended'].includes(r.status):r.status===af;
+    const show=af==='Other'
+      ?!['Active','Cancelled','Suspended'].includes(r.status)
+      :r.status===af;
     if(!show) tr.style.display='none';
   }
   document.getElementById('tb').appendChild(tr);
   tr.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function filt(f,btn){
-  af=f;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');
+  af=f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on')); btn.classList.add('on');
   document.querySelectorAll('#tb tr').forEach(tr=>{
     const s=tr.dataset.status;
     tr.style.display=(f==='All'||(f==='Other'?!['Active','Cancelled','Suspended'].includes(s):s===f))?'':'none';
   });
 }
+
+// Download
 async function dlResults(){
   if(!allResults.length) return;
-  const r=await fetch('/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({results:allResults})});
-  const a=document.createElement('a');a.href=URL.createObjectURL(await r.blob());
-  a.download='GSTIN_Results.xlsx';a.click();
+  const r=await fetch('/api/download',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({results:allResults})
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(await r.blob());
+  a.download='GSTIN_Results.xlsx'; a.click();
+}
+async function closeSession(){
+  await fetch('/api/close',{method:'POST'});
+  setBanner('info','ℹ️','Chrome closed. Refresh to start a new session.');
 }
 
 // Helpers
@@ -343,17 +421,20 @@ function setBanner(type,icon,msg){
   document.getElementById('bMsg').innerHTML=msg;
 }
 function badge(s){
-  const m={'Active':'ba','Cancelled':'bc','Suspended':'bs','Invalid Format':'bi','Not Found':'bi','Timeout':'be','Error':'be'};
+  const m={'Active':'ba','Cancelled':'bc','Suspended':'bs',
+           'Invalid Format':'bi','Not Found':'bi','Timeout':'be','Error':'be'};
   return`<span class="badge ${m[s]||'bu'}">${s}</span>`;
 }
 let blinkTmr=null;
 function flashTitle(msg){
-  if(blinkTmr)clearInterval(blinkTmr);
-  const orig=document.title;let t=0;
+  if(blinkTmr) clearInterval(blinkTmr);
+  const orig=document.title; let t=0;
   blinkTmr=setInterval(()=>{document.title=t++%2===0?msg:orig;},700);
   setTimeout(()=>{clearInterval(blinkTmr);document.title=orig;},30000);
 }
-function setMsg(id,cls,txt){document.getElementById(id).innerHTML=txt?`<div class="alert ${cls}">${txt}</div>`:''}
+function setMsg(id,cls,txt){
+  document.getElementById(id).innerHTML=txt?`<div class="alert ${cls}">${txt}</div>`:'';
+}
 </script>
 </body>
 </html>
